@@ -1,0 +1,245 @@
+________________________________________________________________________
+
+0. GENERAL NOTES
+
+  - The program solves for the ground state of a Hamiltonian of one of
+    the following forms. Form 1:
+
+      H = \sum_{rs} <r|h|s> c^r c_s +
+                     [1/2] \sum_{rstu} <rs|tu> c^r c^s c_u c_t
+
+    where r/s/t/u are spin-orbitals, c^r/c_u are fermionic creation/
+    destruction operators, and <rs|tu> = (rt|su) are two-electron matrix
+    elements (in the input files given in the latter order). The
+    operator H must commute with Sz: [H,Sz] = 0. This translates into
+    the following restrictions on the matrix elements:
+
+      <r|h|s> = 0  whenever spin(r) != spin(s)
+      <rs|tu> = 0  whenever spin(r) != spin(t) or spin(s) != spin(u)
+
+    Form 2:
+
+      H = \sum_{rs} <r|h|s> E^r_s +
+                     [1/2] \sum_{rstu} <rs|tu> E^{rs}_{tu}
+
+    where r/s/t/u are spatial orbitals and the substitution operators
+    are spin-coupled:
+
+      E^r_s = c^{rA} c_{sA} + c^{rB} c_{rB}.
+
+      E^{rs}_{tu} = c^{rA} c^{sA} c_{uA} c_{tA} +
+                    c^{rA} c^{sB} c_{uB} c_{tA} +
+                    c^{rB} c^{sA} c_{uA} c_{tB} +
+                    c^{rB} c^{sB} c_{uB} c_{tB}
+
+    Any Hamiltonian which commutes with both Sz and S^2 can be written
+    in form 2. Form 2 is the standard form; it is cheaper to process and
+    allows for targeting individual spin states via spin projection (see
+    below).
+
+    There is also an optimization available for diagonal two-particle
+    interactions (Hubbard type), which is used automatically when
+    possible and --basis=Input is specified.
+
+  - The program employs a "direct determinant full-CI" approach, using
+    a variant of the Knowles algorithm:
+    
+      http://dx.doi.org/10.1016/0009-2614(84)85513-X
+
+    Normally the Hamiltonian is never explicitly constructed, and only
+    the contraction |r> = H |c> is calculated and used in a Davidson
+    iterative subspace diagonalization. However, for small systems the
+    Hamiltonian /can/ be constructed and stored if needed, using the
+    --save-pspace-h option.
+
+  - Invoking "fci" without parameters provides a list of available
+    program options.
+
+  - Due to the low computing effort vs. data size ratio of full CI, the
+    parallel performance is not very good. It can be improved somewhat
+    (at the cost of increasing the amount of memory) by using a large
+    --diis-block-size=xxxx argument (given in kb; if this is larger than
+    one fci vector, subspace vectors are kept in memory instead of being
+    written to disk). Running on more than four cores is generally not
+    helpful.
+
+  - The most recent version of the program is available at
+
+      www.princeton.edu/chemistry/chan/dmet/
+
+    We are willing to extend or help with extending the program for
+    other uses, if required. See 3. Contact Gerald Knizia.
+
+
+________________________________________________________________________
+
+1. COMPILING & TESTING
+
+  - In order to compile the program, the C++ boost libraries and a
+    BLAS/LAPACK (e.g., MKL, ACML) must be installed.
+
+  - Use "make_without_scons.sh" to compile the program. This file needs
+    some adjustments to your system as noted. Example configurations are
+    provided in the file.
+
+  - To test the program, run 'fci FCIINP_Ne_VDZ'.
+    Frequent problems:
+    
+      o The program instantly crashes with SIGSEGV after showing the
+        initial line about reading the input file.
+
+        A: Make sure that you use the BLAS/LAPACK version with the
+           correct integer size. See comments on integer sizes in
+           "make_without_scons.sh".
+           By default, the program assumes that BLAS/LAPACK use 8 byte
+           integers on 64bit platforms.
+
+      o The program crashes with "Illegal instruction" at the start of
+        the calculation.
+
+        A: When using MKL, remove "-lmkl_avx" from the BLAS line. This
+           library makes MKL use the Intel AVX instruction set, which
+           not all processors have. Similarly, when using ACML, do not
+           use the FMA4 version of the library unless you have a CPU
+           which supports this instruction set.
+
+      o The programs runs in serial mode (e.g., when compiling without
+        -fopenmp or with "OMP_NUM_THREADS=1 fci FCIINP_Ne_VDZ"), but
+        crashes in parallel mode. When compiling, you see errors about
+        unsigned iterator variables.
+
+        A: The fci program requires OpenMP version >= 3.0 to work. Older
+           compilers, e.g., gcc before version 4.3.1, will compile the
+           program, but the compiled program does not work. In this case
+           the OpenMP version cannot be used.
+
+      o The programs runs on all available cores.
+
+        A: This is sometimes the default behavior of OpenMP runtimes if
+           no environment variable OMP_NUM_THREADS is set. It also
+           applies to other programs, like the multi-thread version of
+           Intel MKL, for example.
+
+           You can change it by setting OMP_NUM_THREADS, e.g., in bash:
+           
+               export OMP_NUM_THREADS=4
+               
+           or csh:
+           
+               setenv OMP_NUM_THREADS 4
+               
+           or by running fci with the --nthreads=x command line option.
+           Additionally, in bash, variables which apply only for a
+           single command can be specified like this:
+           
+               OMP_NUM_THREADS=4 fci FCIINP_Ne_VDZ
+
+      o The program sometimes runs really slow in parallel mode, but
+        okay in serial mode.
+
+        A: This can happen if some of the cores are occupied by other
+           processes. E.g., if you have a four-core machine and if
+           running "top" you see two applications running at 100%, then
+           running fci on four cores will be very, very slow. This is
+           a peculiarity of MKL.
+
+________________________________________________________________________
+
+2. PREPARING INPUTS
+
+  - This program is intented to be run by scripts, not really manually.
+    Some ideas of how this can be used together with Python/numpy/scipy
+    can be found in fci_iface.py of the DMET code.
+
+  - The program uses Molpro's FCIDUMP format to specify both the
+    Hamiltonian and the wave function declaration.
+    
+      o In the header, MS2 is the difference between the number of alpha
+        (=up spin) and beta (=down spin) electrons. If spin projection
+        is enabled, this also defines the total spin (see fci command
+        line help for '--spin-proj')
+
+      o The data lines have format 'intvalue i j k l' where intvalue is
+        the value of the Hamiltonian matrix element, and i/j/k/l defines
+        which matrix element is affected: two-electron Hamiltonian matrix
+        elements (ij|kl) (chemist's notation) are given with i,j,k,l all
+        non-zero; one-electron matrix elements <i|h|j> are given with
+        k=l=0; the core energy (an additive constant to the total energy)
+        is given by i=j=k=l=0.
+        <i|h|j> is assumed to be symmetric, (ij|kl) is assumed to have
+        8-fold symmetry [(kl|ij)=(ij|kl)=(ji|kl)=(ij|lk)]. Only one
+        non-redundant matrix element should to be specified. If more
+        than one is given, the last one is used.
+
+      o If unrestricted orbitals are to be used (i.e., different spatial
+        parts for A and B spin orbitals), then the input should be
+        prepared as in FCIINP_CN_sto3g_uhf: (i) the header contains an
+        additional flag 'IUHF=1', (ii) there are three sets of
+        two-electron integrals: AA, BB, and AB, specifying the matrix
+        elements of (AA|AA), (BB|BB), and (AA|BB) spin, respectively.
+        (AA|BB)-spin integrals have only 4-fold symmetry. A line of
+        "0 0 0 0 0" is used to separate between the integral sets.
+        (iii) There are two sets of one-electron integrals, (A|h|A) and
+        (B|h|B), again separated by a "0 0 0 0 0" line.
+
+________________________________________________________________________
+
+3. POSSIBLE EXTENSIONS
+
+These are issues I am willing to consider including when asked for:
+
+  - The program can currently not do excited states, but fiddling them
+    in would not be that much of an issue.
+
+    In the current version, for small systems one can get excited states
+    by abusing a combination of
+    
+      fci --pspace=<large number> --pspace-root=N --spin-proj=0 <File>
+
+    This is a result of the initial guess being an exact eigenstate if
+    the pspace covers all determinants in the system.
+    
+    For small systems, one could also tell the program to construct and
+    store the entire Hamiltonian in a determinant basis (that can be
+    done with --pspace=<large number> --save-pspace-h=(filename))
+    and then diagonalize it with scipy, matlab or something similar.
+
+  - All the matrix elements must be real at this moment. I might
+    considering making a complex version of fci in order to support
+    twist averaged boundary conditions, non-colinear spins, etc.
+
+  - I might consider the construction of Green's functions.
+
+  - Supporting Hamiltonians which do not commute with Sz or with the
+    particle number operator is troublesome in this approach, and would
+    make the method much more expensive. I might still code that, but
+    only when given a compelling reason.
+
+
+________________________________________________________________________
+
+4. CHANGE HISTORY
+
+   - 2012-07-27: Updated release with the following changes:
+
+      o Various small fixes and improvements; compilation should now
+        work without problems on 32bit systems. Systems with more than
+        32 orbtials should now work. Fully spin polarized systems (i.e.,
+        no beta electrons) should work. Command line flag to circumvent
+        'stack size exceeded' error added (--work-memory).
+   
+      o Added support for spin-projections in RHF mode (to make sure
+        that a wave function of a given total spin is obtained, not only
+        with a given S_z quantum number)
+
+      o Added support for unrestricted orbitals in order to allow for
+        anti-ferromagnetic reference functions in DMET.
+
+      o Added readme file and some more example inputs.
+      
+
+   - 2012-04-20: Initial release together with the Hubbard DMET code for
+     http://arxiv.org/abs/1204.5783
+
+-- 
+Gerald Knizia, 2012-07-27

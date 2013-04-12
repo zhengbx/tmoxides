@@ -1,0 +1,27 @@
+#!/usr/bin/python
+FileList = "RDTSC.cpp CxAssertFail.cpp CxAlgebra.cpp CxStorageDevice.cpp CxMemoryStack.cpp BinomialCoeff.cpp  Fci.cpp  FciDump.cpp  FciVec.cpp FciOps.cpp FciSubspace.cpp FciCsf.cpp".split()
+
+#BlasLapack = "-L/srv/usr/local/opt/intel/mkl/10.2.1.017/lib/em64t/ -lmkl_core -lmkl_intel_ilp64 -lmkl_sequential -lmkl_lapack -Wl,-rpath,/srv/usr/local/opt/intel/mkl/10.2.1.017/lib/em64t/"
+if 1:
+   BaseFlags = "-Wall -fopenmp -DINCLUDE_OPTIONALS "
+   #BlasLapack = "-L/opt/intel/composerxe/mkl/lib/intel64 -lmkl_gf_ilp64 -lmkl_sequential -lmkl_core -lmkl_avx -Wl,-rpath,/opt/intel/composerxe/mkl/lib/intel64"
+   BlasLapack = "-L/opt/intel/composerxe/mkl/lib/intel64 -lmkl_gf_ilp64 -lmkl_gnu_thread -lmkl_core -lmkl_avx -fopenmp -lpthread -Wl,-rpath,/opt/intel/composerxe/mkl/lib/intel64"
+   #BlasLapack = "-L/opt/beta-intel/mkl/lib/intel64 -lmkl_gf_ilp64 -lmkl_gnu_thread -lmkl_core -lmkl_avx -fopenmp -lpthread -Wl,-rpath,/opt/beta-intel/mkl/lib/intel64"
+else:
+   BaseFlags = "-Wall -DINCLUDE_OPTIONALS "
+   BlasLapack = "-L/opt/intel/composerxe/mkl/lib/intel64 -lmkl_gf_ilp64 -lmkl_sequential -lmkl_core -lmkl_avx -Wl,-rpath,/opt/intel/composerxe/mkl/lib/intel64"
+
+Libs = BlasLapack + " -fopenmp -lrt "
+
+def MakeTarget(NameOut, ObjDir, Env ):
+    Env.VariantDir(ObjDir, '.', duplicate=0)
+    return Env.Program(NameOut, [ObjDir + s for s in FileList])
+
+Incl = " "
+
+dbg = MakeTarget( "fcid", "build/debug/", Environment( CCFLAGS = "-g -O0 -D_DEBUG " + BaseFlags + Incl, LINKFLAGS = Libs, LIBS = "boost_program_options") )
+opt = MakeTarget( "fci", "build/release/", Environment( CCFLAGS = "-O3 -DNDEBUG " + BaseFlags + Incl, LINKFLAGS = Libs, LIBS = "boost_program_options") )
+
+Default(dbg)
+Default(opt)
+
