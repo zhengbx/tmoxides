@@ -343,7 +343,7 @@ def main():
       else:
          dataoutput["Mu"].append(Job.Results["Mu"])
          dataoutput["Gap"].append(Job.Results["Gap"])
-         dataoutput["AForder"].append(0)
+         dataoutput["AFOrder"].append(0)
          ddensity = np.trace(abs(RdmHl))/nImp
       #chargeDensity=FmtRho('charge density',Jobs[i].Results["Rdm"],'_',Jobs[i].Params.LatticeWf.OrbType)
       #spinDensity=FmtRho('spin density',Job.Results["Rdm"],'S',Job.Params.LatticeWf.OrbType)

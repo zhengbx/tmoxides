@@ -178,8 +178,8 @@ def FitVcorComponent(EmbFock, nImp, RdmHl, VLOC_TYPE, VLOC_FIT_TYPE):
          print TestRdm-FitRdmHf
       return MakeVlocForRdm(FitRdmHf, nOcc, EmbFock, h0_for_vloc)
 
-   #if 0:
-   if VLOC_TYPE == "Local" and VLOC_FIT_TYPE in ["ImpRdm", "FullRdm"]:
+   if 0:
+   #if VLOC_TYPE == "Local" and VLOC_FIT_TYPE in ["ImpRdm", "FullRdm"]:
       # hm.. this is actually not quite 100% the same as we did before
       # in the FullRdm case. It gives, however, almost the same numbers
       # and is more stable and much more scalable...
