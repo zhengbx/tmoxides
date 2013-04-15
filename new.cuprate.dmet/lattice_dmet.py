@@ -13,7 +13,7 @@
 # 
 # Authors:
 #    Gerald Knizia, 2012
-
+import scipy as sp
 from output import *
 from textwrap import dedent
 from meanfield import *
