@@ -1,3 +1,4 @@
+#! /usr/bin/env python2.7
 # This file is part of the lattice-dmet program. lattice-dmet is free
 # software: you can redistribute it and/or modify it under the terms of
 # the GNU General Public License as published by the Free Software
@@ -72,7 +73,6 @@ class FHub1dJob(FJob):
       LatticeSystem = FLatticeSystem(WfDecl=P.LatticeWf, SuperCell=sc,
          InitialGuess=StartingGuess['fock'], Params=P.MeanField, Log=Log)
       #LatticeSystem.RunHf(Log=Log)
-      print "DmetContext"
       DmetContext = FDmetContext(LatticeSystem, P.Fragments, P.DMET, Log)
       DmetResult = DmetContext.Run(Log, StartingGuess)
       # next step: how to organize DMET and the fragmentation,
@@ -347,8 +347,6 @@ def main():
          ddensity = np.trace(abs(RdmHl))/nImp
       #chargeDensity=FmtRho('charge density',Jobs[i].Results["Rdm"],'_',Jobs[i].Params.LatticeWf.OrbType)
       #spinDensity=FmtRho('spin density',Job.Results["Rdm"],'S',Job.Params.LatticeWf.OrbType)
-      #density1 = spinDensity[37:51]
-      #density2 = spinDensity[53:67]
       #dataoutput["AFOrder"].append(abs(float(density1)-float(density2))/2)
 
    filename = task
