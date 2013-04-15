@@ -17,9 +17,9 @@
 #FciExecutable = "/home/cgk/dev/fci/fci"
 #FciExecutable = "/home/qiaoni/Documents/work/dev/dmet-hubbard/fci.20121221/fci --work-memory 7680"
 #FciExecutable = "/home/qiaoni/Documents/work/dev/dmet-hubbard/fci.20121221/fci "
-FciExecutable = "/home/boxiao/dmet_tmoxides_master/fci.20121221/fci --work-memory 200"
+FciExecutable = "/home/qiaoni/dev/dmet_tmoxides/fci.20121221/fci --work-memory 200"
 
-TmpDir = "/scratch/gpfs/boxiao"
+TmpDir = "/scratch/gpfs/qiaoni/dmet_tmoxides"
 #TmpDir = None
 #TmpDir = "/dev/shm/"
 # ^- if not None, use this as prefix for temporary files. Otherwise

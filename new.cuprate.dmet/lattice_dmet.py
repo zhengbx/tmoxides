@@ -13,7 +13,7 @@
 # 
 # Authors:
 #    Gerald Knizia, 2012
-import scipy as sp
+
 from output import *
 from textwrap import dedent
 from meanfield import *
@@ -72,6 +72,7 @@ class FHub1dJob(FJob):
       LatticeSystem = FLatticeSystem(WfDecl=P.LatticeWf, SuperCell=sc,
          InitialGuess=StartingGuess['fock'], Params=P.MeanField, Log=Log)
       #LatticeSystem.RunHf(Log=Log)
+      print "DmetContext"
       DmetContext = FDmetContext(LatticeSystem, P.Fragments, P.DMET, Log)
       DmetResult = DmetContext.Run(Log, StartingGuess)
       # next step: how to organize DMET and the fragmentation,
@@ -88,6 +89,7 @@ class FHub1dJob(FJob):
          'Mu':  LatticeSystem.Mu,
          'Gap': LatticeSystem.Gap,
          'Rdm': LatticeSystem.RdmT[0].real,
+         'RdmHl' : DmetResult.Rdm,
          'nSites': len(sc.Sites), # number of sites in the super-cell
          'ErrVcor': DmetResult.dVc
       }
@@ -203,9 +205,9 @@ def main():
 
    Jobs = []
    Ln = 8
-   task = ['La2CuO4','LaNiO3','other'][1]
-   nImps = [2]
-   J = 0.5
+   task = ['La2CuO4','LaNiO3','other'][0]
+   nImps = [4]
+   J = 3.0   
    #read in input file
    #specify params: U, J,Delta, shift into ModelParam class
    #specify params: nel, nImp, ClusterSize in ScParam class
@@ -225,7 +227,7 @@ def main():
          ImpListOriginal = [0, 1]
          ImpList = []
          for j in range(nImp / 2):
-           ImpList += [i + 11*j for i in ImpListOriginal]
+           ImpList += [i + 12*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_LaNiO3
          ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': [-1,-1,-1], 'ClusterSize': [1,1,1]})
@@ -237,26 +239,29 @@ def main():
       # states at tight-binding level.
       StartGuessNextU = None
 
+
+      #for U in [x/10.0 for x in range(1,71)]: 
       for U in [4.0]:
          StartGuess = StartGuessNextU # <- start with last U's half-filling result.
          StartGuessNextU = None
-         for Delta in [2.]:
+         for Delta in [-1.9606]:
          #for Delta in [-1.3121]:         
             ModelParams = {'t': 1., "U": U, "J": J, "Delta": Delta }
             Model = FModelClass(**ModelParams)
             SuperCell = FSuperCell(Model, **ScParams.__dict__)
             #AllowedOccupations = SuperCell.CalcNonDegenerateOccupations(ThrDeg=1e-5)
             #Occs = AllowedOccupations[:len(AllowedOccupations)/2+1]
-            #Occs = Occs[-1:] # <- only half filling
             #Occs = [13312]
-            Occs = [Ln ** 3 * (2/2 + 9)]
+            Occs = [SuperCell.nUnitCells*(nImp+(SuperCell.nSitesU-nImp)*2)]
+            #Occs = Occs[-1:] # <- only half filling
             for Occ in reversed(Occs):
+            #for Occ in Occs:
                sp = 0
                #sp = 1 # spin polarization.
                #iOccA = AllowedOccupations.index(Occ)
-               LatticeWf = FWfDecl(nElecA=Occ,
-                              nElecB=Occ,
-                              OrbType="UHF") #_UHF/RHF
+               LatticeWf = FWfDecl(nElecA=Occ/2,
+                              nElecB=Occ/2,
+                              OrbType="UHF")
                #LatticeWf = FWfDecl(nElecA=AllowedOccupations[iOccA+sp],
                #               nElecB=AllowedOccupations[iOccA-sp],
                #               OrbType="UHF") #_UHF/RHF
@@ -313,66 +318,38 @@ def main():
          PrintTable(Log, AllResults, Desc, SortKeys=["U", "J", "Delta", "<n>", "Fragments", "ErrVcor"])
    JobGroup = FJobGroup(Jobs)
    JobGroup.Run(Log, PrintJobResults)
+
    # gathering output
-   """
-   length = len(Jobs)
-   dataoutput = np.zeros((length,5),float)
-   for i in range(length):
-      dataoutput[i][0] = Jobs[i].Params.Model.U
-      dataoutput[i][1] = Jobs[i].Results["dmet"].TotalEnergy
-      chargeDensity=FmtRho('charge density',Jobs[i].Results["Rdm"],'_',Jobs[i].Params.LatticeWf.OrbType)
-      spinDensity=FmtRho('spin density',Jobs[i].Results["Rdm"],'S',Jobs[i].Params.LatticeWf.OrbType)
-      density1 = spinDensity[37:51]
-      density2 = spinDensity[53:67]
-      AForder = abs(float(density1)-float(density2))/2
-      Mu = Jobs[i].Results["Mu"]
-      Gap = Jobs[i].Results["Gap"]
-      if (Jobs[i].Params.LatticeWf.OrbType=="UHF"):
-         dataoutput[i][2] = Mu[0]
-      else:
-         dataoutput[i][2] = Mu
-      if (Jobs[i].Params.LatticeWf.OrbType=="UHF"):
-         dataoutput[i][3] = Gap[0]
-      else:
-         dataoutput[i][3] = Gap
-      dataoutput[i][4] = AForder
-   filename = 'honeycombLn='
-   filename = filename+str(Ln)
-   filename = filename+'nImp=4'
-   print task
-   if task=='honeycombl1':
-      filename = filename+'l1'
-   elif task=='honeycombl2':
-      filename = filename+'l2'
-   elif task=='honeycombo':
-      filename = filename+'o'
-   elif task=='honeycombx':
-      filename = filename+'x'
-   filename = filename+'.npy'
-   np.save(filename,dataoutput)
-   #np.save("dmet_resultLn=36nImp=61.npy",dataoutput)
-   """
    dataoutput = {
       "U":[],
       "E":[],
       "Mu":[],
       "Gap":[],
-      "AFOrder":[]
+      "AFOrder":[],
+      "ddensity":[]
    }
    for Job in Jobs:
+      RdmHl = Job.Results["RdmHl"]
       dataoutput["U"].append(Job.Params.Model.U)
       dataoutput["E"].append(Job.Results["dmet"].TotalEnergy)
       if (Job.Params.LatticeWf.OrbType=="UHF"):
          dataoutput["Mu"].append(Job.Results["Mu"][0])
          dataoutput["Gap"].append(Job.Results["Gap"][0])
+         chargeRdm = RdmHl[::2,::2]+RdmHl[1::2,1::2]
+         spinRdm = RdmHl[::2,::2]-RdmHl[1::2,1::2]
+         nImp = spinRdm.shape[0]
+         AForder = np.trace(abs(spinRdm))/nImp 
+         ddensity = np.trace(abs(chargeRdm))/nImp
       else:
          dataoutput["Mu"].append(Job.Results["Mu"])
          dataoutput["Gap"].append(Job.Results["Gap"])
+         dataoutput["AForder"].append(0)
+         ddensity = np.trace(abs(RdmHl))/nImp
       #chargeDensity=FmtRho('charge density',Jobs[i].Results["Rdm"],'_',Jobs[i].Params.LatticeWf.OrbType)
-      spinDensity=FmtRho('spin density',Job.Results["Rdm"],'S',Job.Params.LatticeWf.OrbType)
-      density1 = spinDensity[37:51]
-      density2 = spinDensity[53:67]
-      dataoutput["AFOrder"].append(abs(float(density1)-float(density2))/2)
+      #spinDensity=FmtRho('spin density',Job.Results["Rdm"],'S',Job.Params.LatticeWf.OrbType)
+      #density1 = spinDensity[37:51]
+      #density2 = spinDensity[53:67]
+      #dataoutput["AFOrder"].append(abs(float(density1)-float(density2))/2)
 
    filename = task
    filename = filename+"Ln="+str(Ln)
@@ -382,27 +359,6 @@ def main():
    p.dump(dataoutput, resultfile)
    resultfile.closed
    print "Result File:", filename
-
-   #print length
-   #a = array[4]
-   #U = Jobs[0].Params.Model.U
-   #E = Jobs[0].Results["dmet"].TotalEnergy
-   #print "the jobs is:"
-   #print Jobs[0].Params
-   #print Jobs[0].Results["nSites"]
-   #print Jobs[0].Results["Gap"]
-   #print Jobs[0].Results["Mu"]
-   #chargeDensity=FmtRho('charge density',Jobs[0].Results["Rdm"],'_',Jobs[0].Params.LatticeWf.OrbType)
-   #spinDensity=FmtRho('spin density',Jobs[0].Results["Rdm"],'S',Jobs[0].Params.LatticeWf.OrbType)
-   #print chargeDensity
-   #print spinDensity
-   #density = spinDensity[37:51]
-   #print density
-   #density = spinDensity[53:67]
-   #print density
-   #print len(chargeDensity)
-   #print Jobs[0].Results["Rdm"]
-
 
 main()
 

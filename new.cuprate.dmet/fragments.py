@@ -17,7 +17,6 @@
 import numpy as np
 import scipy.linalg as la
 import itertools as it
-import time
 from meanfield import FLatticeSystem, flat01
 from quantum_systems import FSystem, FWfDecl
 from helpers import mdot, MakeSmh, resmin, ExtractSpinComp, CombineSpinComps
@@ -44,12 +43,18 @@ class FDmetResult(object):
    def __init__(self, FragmentResults, ClusterFactor):
       # sum up the total energy and total electron number
       TotalEnergy = 0.
+      TotalEnergy2e = 0.
       TotalElec = 0.
       for (Fragment, r) in FragmentResults:
          Factor = Fragment.GetTotalFactor() * ClusterFactor
          TotalEnergy += Factor * r.EmbEnergy
+         TotalEnergy2e += Factor * r.Energy2e
          TotalElec += Factor * r.EmbElec
+      nImp = len(Fragment.Sites)
+      Rdm = r.GetRdm()
+      self.Rdm = Rdm[:nImp,:nImp]
       self.TotalElecEnergy = TotalEnergy
+      self.TotalEnergy2e = TotalEnergy2e
       self.TotalEnergy = None
       self.TotalElec = TotalElec
       self.FragmentResults = FragmentResults
@@ -108,7 +113,7 @@ class FFragment():
       # make CoreH, Int2e, and WfDecl
       CoreEnergy = 0   # (<- just added from full system)
       CoreH = self.ToEmb(fs.CoreH)
-       
+ 
       nOrb = EmbBasis.shape[1]
       if not DmetParams.UseInt2e:
          # put local Us on the impurity sites and nothing on the rest
@@ -225,6 +230,7 @@ class FFragment():
 
    def ToEmb(self, M):
       """Transform matrix from full system into the embedded system."""
+      #return mdot(self.EmbBasis.T, M, self.EmbBasis)
       return self.FullSystem.SuperCell.TransformToEmb(self.EmbBasis, M, self.EmbBasis)
 
    def Run(self, DmetParams, Log):
@@ -386,7 +392,6 @@ class FDmetContext:
       assert(isinstance(LatticeSystem, FLatticeSystem))
       assert(isinstance(DmetParams, FDmetParams))
       self.FullSystem = LatticeSystem #fullsys=lattuicesys-> here the CoreH_Unpatched comes from
-      #LatticeSystem is: 
       self.DmetParams = DmetParams
       self.Fragments = []
       def AdaptSiteList(L):
@@ -582,11 +587,13 @@ class FDmetContext:
             DiagDesc,DiagMap = "", lambda x:x
          Log(pResultFmt, "Final correlation potential%s"%DiagDesc, DiagMap(VcorLarge), self.FullSystem.WfDecl.OrbType)
          Log(pResultFmt, "Final mean field rdm%s"%DiagDesc, DiagMap(FullSystemHfResult.RdmT[0].real), self.FullSystem.WfDecl.OrbType)
+         Log(pResultFmt, "Final Fci rdm%s"%DiagDesc, DiagMap(jgr.Rdm), self.FullSystem.WfDecl.OrbType)
          Log()
          Log(pResultFmt, "Mean-field energy", InitialHfEnergy, "initial")
          Log(pResultFmt, "Mean-field energy", FullSystemHfResult.MeanFieldEnergy, "final")
          Log()
          Log(pResultFmt, "DMET energy", jgr.TotalEnergy)
+         Log(pResultFmt, "DMET 2e energy", jgr.TotalEnergy2e)
          ErrRdm = la.norm(jgr.FragmentResults[0][0].ToEmb(FullSystemHfResult.RdmT.real) - jgr.FragmentResults[0][1].GetRdm())
          Log(pResultFmt, "Error of Density Matrix", ErrRdm)
          #self.PrintFragmentResults(jgr, iMacroIter, dVsum, PrintEmb)

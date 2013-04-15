@@ -457,6 +457,7 @@ class FSuperCell(object):
       #if SitesR is None: SitesR = self.UnitCell
       if SitesR is None: SitesR = self.Sites
       if SitesC is None: SitesC = self.Sites
+
       if _SpinOrb is None and self.SpinOrbs and not self.Model.SitesAreSpinOrbitals:
          # we're supposed to make spin-orbitals, but the input model
          # is not actually a spin-orbital model. So we just ask it to
@@ -471,6 +472,7 @@ class FSuperCell(object):
          Tij = None
          for ijk in self.MinSuperCell_iTs:
             Phase = np.product(self.PhaseShift**ijk)
+            #print "translation: %s  %s" % (np.dot(self.T, self.Size*ijk), ijk)
             SitesR_Trans = SitesR + np.dot(self.T, self.Size*ijk)
             Tij_iT = Phase * self.Model.MakeTijMatrix(SitesR_Trans, SitesC)
             if ( Tij is not None ):
@@ -626,7 +628,7 @@ class FSuperCell(object):
             #    (see FSuperCell._ExpandFull)
             Out += mdot(np.conj(OrbL[nSitesU*i:nSitesU*(i+1),:].T),
                         RowI, OrbR)
-      elif 1:
+      elif 0:
          Op = Op[iOpTs,:,:]
          OrbR = OrbR.reshape((self.nUnitCells, nSitesU, OrbR.shape[1]))
          for (i,ijk) in enumerate(self.iTs):

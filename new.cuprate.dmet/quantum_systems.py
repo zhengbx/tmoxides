@@ -40,8 +40,9 @@ from copy import copy, deepcopy
 from output import *
 
 class FCalcResult(object):
-   def __init__(self, Energy, Orbs, OccNumbers, EmbEnergy=None, EmbElec=None, Ews=None):
+   def __init__(self, Energy, Energy2e, Orbs, OccNumbers, EmbEnergy=None, EmbElec=None, Ews=None):
       self.Energy = Energy
+      self.Energy2e = Energy2e
       self.OccNumbers = OccNumbers
       self.Orbs = Orbs # natural orbitals
       if ( EmbEnergy is not None ):
@@ -486,6 +487,8 @@ class FSystem(object):
       OccNumbers,Orbs = eigh(-rdm); OccNumbers *= -1.
       EmbEnergy = None
       EmbElec = None
+      Energy1e = dot2(self.CoreH, rdm)
+      Energy2e= Energy - Energy1e
       if p:
          Log("%-32s     %-s" % ("Natural occupation", " ".join(["%7.4f" % o for o in OccNumbers])))
          Log(pResultFmt, "Full-CI energy", Energy)
@@ -502,7 +505,7 @@ class FSystem(object):
             Log()
 
       #DeleteFciVectorFile()
-      return FCalcResult(Energy, Orbs, OccNumbers, EmbElec=EmbElec, EmbEnergy=EmbEnergy)
+      return FCalcResult(Energy, Energy2e, Orbs, OccNumbers, EmbElec=EmbElec, EmbEnergy=EmbEnergy)
 
    def CalcFciEnergy1(self, CiVector):
       """calculate the FCI energy for a given CI vector."""

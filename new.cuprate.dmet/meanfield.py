@@ -272,10 +272,12 @@ class FLatticeSystem(object):
             break
          if (it == P.MaxIt - 1):
             break # not converged.
+
          # extrapolate
          #SkipDiis = (fOrbGrad > 1e-2 and it < 1)
          SkipDiis = it < P.DiisStart or fOrbGrad > P.DiisThr
          FockT, OrbGrad, c0 = dc.Apply(FockT, OrbGrad, Skip=SkipDiis)
+
       if (not Converged and P.MaxIt != 1):
          ErrMsg = "%s failed to converge."\
                   "  NIT =%4i  GRAD=%8.2e  DEN=%8.2e" % (self.WfDecl.OrbType, it+1, fOrbGrad, dEnergy)
