@@ -300,12 +300,9 @@ class FHubbardModel_La2CuO4(FLatticeModel):
                #print (dXyz[0], dXyz[1], dXyz[2]), SiteR[0], SiteC[0]
                #print"%s, %s: %s" %(iSiteR, iSiteC, CoreH[iSiteR,iSiteC])
                #print (dXyz[0], dXyz[1], dXyz[2]), SiteR[0], SiteC[0]
-            if TypeC == TypeR and sum(abs(dXyz)) == 0.0:
-               if TypeC in [0, 1, 14, 15]:
-                  CoreH[iSiteR,iSiteC] = 0.
-               else:
-                  CoreH[iSiteR,iSiteC] = self.Delta
-               #print (dXyz[0], dXyz[1], dXyz[2]), SiteR[0], SiteC[0]
+            if TypeC == TypeR and TypeC in [0, 1, 14, 15] and sum(abs(dXyz)) == 0.0:
+               CoreH[iSiteR,iSiteC] -= self.Delta
+              #print (dXyz[0], dXyz[1], dXyz[2]), SiteR[0], SiteC[0]
       return CoreH
       
    def GetUi(self, (SiteTypeI,XyzI)):
@@ -374,11 +371,8 @@ class FHubbardModel_LaNiO3(FLatticeModel):
             TypeR = SiteType[SiteR[0]]
             if ((dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC) in HoppingTCu:
                CoreH[iSiteR,iSiteC] = HoppingTCu[(dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC]
-            if TypeC == TypeR and sum(abs(dXyz)) == 0.0:
-               if TypeC in [0, 1]:
-                  CoreH[iSiteR,iSiteC] = 0.
-               else:
-                  CoreH[iSiteR,iSiteC] = self.Delta
+            if TypeC == TypeR and TypeC in [0, 1, 11] and sum(abs(dXyz)) == 0.0:
+               CoreH[iSiteR,iSiteC] -= self.Delta
       return CoreH
  
    def GetUi(self, (SiteTypeI,XyzI)):

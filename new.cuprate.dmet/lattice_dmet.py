@@ -227,7 +227,7 @@ def main():
          ImpListOriginal = [0, 1]
          ImpList = []
          for j in range(nImp / 2):
-           ImpList += [i + 12*j for i in ImpListOriginal]
+           ImpList += [i + 11*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_LaNiO3
          ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': [-1,-1,-1], 'ClusterSize': [1,1,1]})
@@ -244,14 +244,14 @@ def main():
       for U in [4.0]:
          StartGuess = StartGuessNextU # <- start with last U's half-filling result.
          StartGuessNextU = None
-         for Delta in [-1.9606]:
+         # be aware delta should approximately be positive
+         for Delta in [2.]:
          #for Delta in [-1.3121]:         
             ModelParams = {'t': 1., "U": U, "J": J, "Delta": Delta }
             Model = FModelClass(**ModelParams)
             SuperCell = FSuperCell(Model, **ScParams.__dict__)
             #AllowedOccupations = SuperCell.CalcNonDegenerateOccupations(ThrDeg=1e-5)
             #Occs = AllowedOccupations[:len(AllowedOccupations)/2+1]
-            #Occs = [13312]
             Occs = [SuperCell.nUnitCells*(nImp+(SuperCell.nSitesU-nImp)*2)]
             #Occs = Occs[-1:] # <- only half filling
             for Occ in reversed(Occs):
