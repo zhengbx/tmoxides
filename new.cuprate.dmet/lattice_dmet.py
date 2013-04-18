@@ -25,6 +25,8 @@ from fragments import FFragment, FDmetContext, FDmetParams
 from jobs import FJob, FJobGroup, FDefaultParams, ToClass
 import numpy as np
 import pickle as p
+import fileinput
+import sys
 
 Banner = """\
 ___________________________________________________________________
@@ -198,19 +200,37 @@ def PrintTable(Log, Results, Desc = None, SortKeys = None):
       for (ItemName, ItemDesc) in Desc.items():
          Log("  {:18} {}", ItemName, ItemDesc)
 
-def main():
-   np.set_printoptions(precision=3,linewidth=10060,suppress=False,threshold=np.nan)
-   Log = FOutputLog()
-   Log(Banner)
-
+def main(argv):
+   #check for input file
+   if(len(argv) !=1):
+      raise Exception("No input file or more than one input file specified.")
+   else:
+      np.set_printoptions(precision=3,linewidth=10060,suppress=False,threshold=np.nan)
+      Log = FOutputLog()
+      Log(Banner)
+   #read input file(s?) 
+   file = open(argv[0], 'r')
+   inp = {}
+   for line in file:
+      if (line[0]=='#'):
+         pass
+      else:
+         for i in line.split(' '):
+            if ('\n' in i):
+               i = i[:len(i)-1]
+            inp[i.split('=')[0]]= i.split('=')[1]
+           
+   Cl = [int(j) for j in inp['Cl'].split(',')]
+   PShift = [int(j) for j in inp['PhaseShift'].split(',')]
+   DeltaRange = [float(j) for j in inp['Delta'].split(',')]
+   JRange  = [float(j) for j in inp['J'].split(',')]
+   Ln = int(inp['Ln'])
+   nImps = [int(inp['nImps'])]
+   task = inp['task']
+   URange  = [float(j) for j in inp['U'].split(',')]
+   WavefctType = inp['Wavefct'] 
    Jobs = []
-   Ln = 8
-   task = ['La2CuO4','LaNiO3','other'][0]
-   nImps = [4]
-   J = 3.0   
-   #read in input file
-   #specify params: U, J,Delta, shift into ModelParam class
-   #specify params: nel, nImp, ClusterSize in ScParam class
+ 
    for nImp in nImps:
       #Fragments = [('CI(2)',list(range(nImp)))]
       if task=='La2CuO4':
@@ -221,7 +241,7 @@ def main():
             ImpList += [i + 28*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_La2CuO4
-         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': [-1,-1,-1], 'ClusterSize': [1,1,1]})
+         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
       elif task=='LaNiO3':
          assert(nImp % 2 == 0)
          ImpListOriginal = [0, 1]
@@ -230,84 +250,83 @@ def main():
            ImpList += [i + 11*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_LaNiO3
-         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': [-1,-1,-1], 'ClusterSize': [1,1,1]})
+         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
       else:
          FModelClass = FHubbardModel2dSquare
-         ScParams = ToClass({'TotalSize': [Ln,Ln], 'PhaseShift': [-1,-1], 'ClusterSize': [3,2]})
+         ScParams = ToClass({'TotalSize': [Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
          ModelParams = {'t': 1., "U": 1.0, "J": 1. }
       # make a super-cell in order to determine fillings with unique ground
       # states at tight-binding level.
       StartGuessNextU = None
 
 
-      #for U in [x/10.0 for x in range(1,71)]: 
-      for U in [4.0]:
+      for U in URange:
          StartGuess = StartGuessNextU # <- start with last U's half-filling result.
          StartGuessNextU = None
          # be aware delta should approximately be positive
-         for Delta in [2.]:
-         #for Delta in [-1.3121]:         
-            ModelParams = {'t': 1., "U": U, "J": J, "Delta": Delta }
-            Model = FModelClass(**ModelParams)
-            SuperCell = FSuperCell(Model, **ScParams.__dict__)
-            #AllowedOccupations = SuperCell.CalcNonDegenerateOccupations(ThrDeg=1e-5)
-            #Occs = AllowedOccupations[:len(AllowedOccupations)/2+1]
-            Occs = [SuperCell.nUnitCells*(nImp+(SuperCell.nSitesU-nImp)*2)]
-            #Occs = Occs[-1:] # <- only half filling
-            for Occ in reversed(Occs):
-            #for Occ in Occs:
-               sp = 0
-               #sp = 1 # spin polarization.
-               #iOccA = AllowedOccupations.index(Occ)
-               LatticeWf = FWfDecl(nElecA=Occ/2,
+         for Delta in DeltaRange:
+            for J in JRange:
+               ModelParams = {'t': 1., "U": U, "J": J, "Delta": Delta }
+               Model = FModelClass(**ModelParams)
+               SuperCell = FSuperCell(Model, **ScParams.__dict__)
+               AllowedOccupations = SuperCell.CalcNonDegenerateOccupations(ThrDeg=1e-5)
+               OccsNonDeg = AllowedOccupations[:len(AllowedOccupations)/2+1]
+               Occs = [SuperCell.nUnitCells*(nImp+(SuperCell.nSitesU-nImp)*2)]
+               if (Occs[0]/2.0 in  AllowedOccupations):
+                  print "Actual electron number has non-degenerate ground state."
+               #Occs = Occs[-1:] # <- only half filling
+               for Occ in reversed(Occs):
+                 #for Occ in Occs:
+                 sp = 0
+                 #sp = 1 # spin polarization.
+                 #iOccA = AllowedOccupations.index(Occ)
+                 LatticeWf = FWfDecl(nElecA=Occ/2,
                               nElecB=Occ/2,
-                              OrbType="UHF")
-               #LatticeWf = FWfDecl(nElecA=AllowedOccupations[iOccA+sp],
-               #               nElecB=AllowedOccupations[iOccA-sp],
-               #               OrbType="UHF") #_UHF/RHF
-               P = FParams1(
-                   Model=Model,#ToClass(ModelParams),
-                   SuperCell=ScParams,
-                   LatticeWf=LatticeWf,
-                   Fragments=Fragments)
-                   #P.DMET.DiisStart = 0
-                   #P.DMET.DiisThr = 1e-40
-               P.DMET.MaxIt = 40
-               P.MeanField.MaxIt = 1 # disable iterations.
-               P.MeanField.DiisStart = 8
-               P.InitialGuessSpinBias = None
-               if 1:
-                  # add some bias to make the system preferrably go into
-                  # anti-ferromagnetic solutions. Otherwise we will always
-                  # get RHF solutions via UHF, even if the UHF solution is
-                  # lower.
-                  bias = ModelParams["U"]/2
-                  shift = 0.
-                  shift = ModelParams["U"]/2 if P.MeanField.MaxIt == 1 else 0.
-                  if P.LatticeWf.OrbType == "UHF":
-                     P.InitialGuessSpinBias = np.zeros(2*len(SuperCell.UnitCell))
-                     for (index, site) in enumerate(Fragments[0][1]):
-                        if index % 2 == 0:
-                           sign = 1
-                        else:
-                           sign = -1
-                        P.InitialGuessSpinBias[site * 2] += shift + sign * bias
-                        P.InitialGuessSpinBias[site * 2 + 1] += shift - sign * bias
-                     #print P.InitialGuessSpinBias
-                     #raise SystemExit
-                  else:
-                     P.InitialGuessSpinBias = np.zeros(1*len(SuperCell.UnitCell))
-                     for site in Fragments[0][1]:
-                        P.InitialGuessSpinBias[site] = shift
-               Jobs.append(FHub1dJob(P, InputJob=StartGuess))
-               #print Jobs
-               StartGuess = Jobs[-1]
-               if 0:
-                  # enable this to propagate starting guesses from one U
-                  # to another. Here disabled for the honeycomb hubbard case,
-                  # because at some U between 3. and 4. the solution changes character.
-                  if StartGuessNextU is None:
-                     StartGuessNextU = Jobs[-1]
+                              OrbType=WavefctType)
+                 #LatticeWf = FWfDecl(nElecA=AllowedOccupations[iOccA+sp],
+                 #               nElecB=AllowedOccupations[iOccA-sp],
+                 #               OrbType="UHF") #_UHF/RHF
+                 P = FParams1(
+                    Model=Model,#ToClass(ModelParams),
+                    SuperCell=ScParams,
+                    LatticeWf=LatticeWf,
+                    Fragments=Fragments)
+                    #P.DMET.DiisStart = 0
+                    #P.DMET.DiisThr = 1e-40
+                 P.DMET.MaxIt = 40
+                 P.MeanField.MaxIt = 1 # disable iterations.
+                 P.MeanField.DiisStart = 8
+                 P.InitialGuessSpinBias = None
+                 if 1:
+                    # add some bias to make the system preferrably go into
+                    # anti-ferromagnetic solutions. Otherwise we will always
+                    # get RHF solutions via UHF, even if the UHF solution is
+                    # lower.
+                    bias = ModelParams["U"]/2
+                    shift = 0.
+                    shift = ModelParams["U"]/2 if P.MeanField.MaxIt == 1 else 0.
+                    if P.LatticeWf.OrbType == "UHF":
+                       P.InitialGuessSpinBias = np.zeros(2*len(SuperCell.UnitCell))
+                       for (index, site) in enumerate(Fragments[0][1]):
+                          if index % 2 == 0:
+                             sign = 1
+                          else:
+                             sign = -1
+                          P.InitialGuessSpinBias[site * 2] += shift + sign * bias
+                          P.InitialGuessSpinBias[site * 2 + 1] += shift - sign * bias
+                    else:
+                       P.InitialGuessSpinBias = np.zeros(1*len(SuperCell.UnitCell))
+                       for site in Fragments[0][1]:
+                          P.InitialGuessSpinBias[site] = shift
+                 Jobs.append(FHub1dJob(P, InputJob=StartGuess))
+                 #print Jobs
+                 StartGuess = Jobs[-1]
+                 if 0:
+                    # enable this to propagate starting guesses from one U
+                    # to another. Here disabled for the honeycomb hubbard case,
+                    # because at some U between 3. and 4. the solution changes character.
+                    if StartGuessNextU is None:
+                       StartGuessNextU = Jobs[-1]
 
    def PrintJobResults(Log, JobsDone):
       with Log.Section("r%03x" % len(JobsDone), "RESULTS AFTER %i OF %i JOBS:" % (len(JobsDone), len(Jobs)), 1):
@@ -318,7 +337,6 @@ def main():
          PrintTable(Log, AllResults, Desc, SortKeys=["U", "J", "Delta", "<n>", "Fragments", "ErrVcor"])
    JobGroup = FJobGroup(Jobs)
    JobGroup.Run(Log, PrintJobResults)
-
    # gathering output
    dataoutput = {
       "U":[],
@@ -358,5 +376,6 @@ def main():
    resultfile.closed
    print "Result File:", filename
 
-main()
+
+main(sys.argv[1:])
 

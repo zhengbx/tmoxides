@@ -1,0 +1,2 @@
+#input should be in one line seperated by space
+U=2.0 J=1.0 nImps=2 Ln=8 task=LaNiO3 Delta=1.0 Cl=1,1,1 Wavefct=UHF PhaseShift=1,1,1
