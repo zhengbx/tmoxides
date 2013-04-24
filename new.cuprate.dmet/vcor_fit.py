@@ -219,7 +219,7 @@ def FitVcorComponent(EmbFock, nImp, RdmHl, VLOC_TYPE, VLOC_FIT_TYPE):
          elif VLOC_FIT_TYPE == "ImpRdm":
             if VLOC_TYPE == "Diagonal":
                return dRdm[:nImp]
-            return ToTriangle(dRdm[:nImp,:nImp])
+            return to_triangle(dRdm[:nImp,:nImp])
          elif VLOC_FIT_TYPE == "EnvRdm":
             if VLOC_TYPE == "Diagonal":
                return dRdm[nImp:]
@@ -227,6 +227,9 @@ def FitVcorComponent(EmbFock, nImp, RdmHl, VLOC_TYPE, VLOC_FIT_TYPE):
          elif VLOC_FIT_TYPE == "EnvAndCoupling":
             dRdm[:nImp,:nImp] = 0
             return dRdm.flatten()
+         elif VLOC_FIT_TYPE == "ImpAndCoupling":
+            dRdm[nImp:,nImp:] = 0
+            return to_triangle(dRdm)
          else:
             # fit type not recognized.
             assert(0)
