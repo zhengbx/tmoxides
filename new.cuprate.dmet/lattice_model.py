@@ -254,7 +254,7 @@ class FHubbardModel_La2CuO4(FLatticeModel):
       LatticeVectors[1,:] = [0.0,1.,0.0]
       LatticeVectors[2,:] = [0.0,0.0,1.]
       # FIXMEL MaxRangeT and EnergyFactor are not adapted to the model 
-      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/6)
+      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/4)
 
    def MakeTijMatrix(self, SitesR, SitesC):
       """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
@@ -344,7 +344,7 @@ class FHubbardModel_LaNiO3(FLatticeModel):
       LatticeVectors[2,:] = [0.0,0.0,1.]
       # FIXMEL MaxRangeT and EnergyFactor are not adapted to the model 
       # MaxRangeT should be larger than sqrt(3)
-      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/6)
+      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/2)
 
    def MakeTijMatrix(self, SitesR, SitesC):
       """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
@@ -369,9 +369,9 @@ class FHubbardModel_LaNiO3(FLatticeModel):
          for (iSiteR, SiteR) in enumerate(SitesR):
             dXyz = SiteR[1] - SiteC[1]
             TypeR = SiteType[SiteR[0]]
-            if ((dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC) in HoppingTCu:
-               CoreH[iSiteR,iSiteC] = HoppingTCu[(dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC]
-            if TypeC == TypeR and TypeC in [0, 1, 11] and sum(abs(dXyz)) == 0.0:
+            if ((dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC) in HoppingTNi:
+               CoreH[iSiteR,iSiteC] = HoppingTNi[(dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC]
+            if TypeC == TypeR and TypeC in [0, 1] and sum(abs(dXyz)) == 0.0:
                CoreH[iSiteR,iSiteC] -= self.Delta
       return CoreH
  
