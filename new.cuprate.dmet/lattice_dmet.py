@@ -229,6 +229,8 @@ def main(argv):
    task = inp['task']
    URange  = [float(j) for j in inp['U'].split(',')]
    WavefctType = inp['Wavefct'] 
+   VCOR_FIT_TYPE = inp['FitType']
+
    Jobs = []
  
    for nImp in nImps:
@@ -294,6 +296,7 @@ def main(argv):
                     #P.DMET.DiisStart = 0
                     #P.DMET.DiisThr = 1e-40
                  P.DMET.MaxIt = 40
+                 P.DMET.VcorFitType = VCOR_FIT_TYPE
                  P.MeanField.MaxIt = 1 # disable iterations.
                  P.MeanField.DiisStart = 8
                  P.InitialGuessSpinBias = None
