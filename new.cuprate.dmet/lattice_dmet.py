@@ -27,6 +27,9 @@ import numpy as np
 import pickle as p
 import fileinput
 import sys
+import os
+from settings import LibDir
+from tempfile import mkdtemp
 
 Banner = """\
 ___________________________________________________________________
@@ -56,7 +59,7 @@ class FHub1dJob(FJob):
    def __init__(self, Params, InputJob = None):
       # Input job: nothing or job to take initial guess for
       # mean field/vloc/embedded wave functions from.
-      assert(InputJob is None or isinstance(InputJob, FHub1dJob))
+      assert(InputJob is None or isinstance(InputJob, FHub1dJob) or 'vcor' in InputJob)
       FJob.__init__(self, Params, [InputJob])
       pass
    def Run(self, Log, InputJobs):
@@ -66,7 +69,10 @@ class FHub1dJob(FJob):
       if InputJobs is not None:
          assert(len(InputJobs) == 1)
          GuessJob = InputJobs[0]
-         StartingGuess = GuessJob.Results
+         if isinstance(GuessJob, FHub1dJob):
+            StartingGuess = GuessJob.Results
+         else:  # if GuessJob is an instance of FHub1dJob.Results
+            StartingGuess = GuessJob
       else:
          StartingGuess['fock'] = P.InitialGuessSpinBias
          if P.MeanField.MaxIt == 1 and P.InitialGuessSpinBias is not None:
@@ -211,7 +217,9 @@ def main(argv):
    #read input file(s?) 
    file = open(argv[0], 'r')
    inp = {}
-   for line in file:
+   inputs = file.readlines()
+   file.close()
+   for line in inputs:   
       if (line[0]=='#'):
          pass
       else:
@@ -230,6 +238,7 @@ def main(argv):
    URange  = [float(j) for j in inp['U'].split(',')]
    WavefctType = inp['Wavefct']
    VCOR_FIT_TYPE = inp['FitType']
+   ReadInitialGuess = inp['VcorGuess']   
 
    Jobs = []
 
@@ -259,12 +268,15 @@ def main(argv):
          ModelParams = {'t': 1., "U": 1.0, "J": 1. }
       # make a super-cell in order to determine fillings with unique ground
       # states at tight-binding level.
-      StartGuessNextU = None
-
+      if ReadInitialGuess != "None":
+         with open(os.path.join(LibDir, ReadInitialGuess), "r") as InitGuessFile:
+            StartGuess = p.load(InitGuessFile)
+      else:
+         StartGuess = None
 
       for U in URange:
-         StartGuess = StartGuessNextU # <- start with last U's half-filling result.
-         StartGuessNextU = None
+         #StartGuess = StartGuessNextU # <- start with last U's half-filling result.
+         #StartGuessNextU = None
          # be aware delta should approximately be positive
          for Delta in DeltaRange:
             for J in JRange:
@@ -340,6 +352,10 @@ def main(argv):
          PrintTable(Log, AllResults, Desc, SortKeys=["U", "J", "Delta", "<n>", "Fragments", "ErrVcor"])
    JobGroup = FJobGroup(Jobs)
    JobGroup.Run(Log, PrintJobResults)
+   
+   # save the executed jobs for reference and reuse
+   JobGroup.SaveJobResults(mkdtemp(prefix=os.path.split(argv[0])[1], dir=LibDir), " ".join(inputs))
+
    # gathering output
    dataoutput = {
       "U":[],
@@ -376,9 +392,8 @@ def main(argv):
    filename = filename+'.pickle'
    resultfile = open(filename, 'w')
    p.dump(dataoutput, resultfile)
-   resultfile.closed
+   resultfile.close()
    print "Result File:", filename
-
 
 main(sys.argv[1:])
 

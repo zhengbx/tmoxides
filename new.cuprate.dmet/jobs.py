@@ -21,6 +21,8 @@ That is, tracking the dependencies of a calculation job on other jobs
 from copy import copy, deepcopy
 from meanfield import FMeanFieldParams
 from fragments import FDmetParams
+import os
+import pickle as p
 
 def FmtParamsR(p, Prefix="p", Lines=None):
    if Lines is None:
@@ -93,7 +95,7 @@ class FJobGroup(object):
             #print "job:", Job
             #print "job.deps -> ", Deps
             #raise SystemExit
-            if Deps is None or not [o for o in Deps if o not in JobsDone]:
+            if Deps is None or not [o for o in Deps if o not in JobsDone] or not isinstance(Deps, dict):
                # prerequisites are met. Run current job.
                #try:
                if 1:
@@ -123,6 +125,15 @@ class FJobGroup(object):
       ## topologically sort job network by dependencies.
       #RootNodes = [o for o in self.Jobs if o.GetDependencies() is None]
       pass
+   
+   def SaveJobResults(self, BasePath, input):
+     # also save input file
+     print BasePath
+     with open(os.path.join(BasePath, "DmetInput"), "w") as save_input:
+        save_input.write(input)
+     for i, Job in enumerate(self.Jobs):
+       with open(os.path.join(BasePath, "Job%03d.pickle" % i), "w") as save_job:
+         p.dump(Job.Results, save_job)
 
 def ToClass(kw):
    class _Struct:
