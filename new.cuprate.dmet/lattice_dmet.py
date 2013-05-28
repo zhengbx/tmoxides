@@ -228,11 +228,11 @@ def main(argv):
    nImps = [int(inp['nImps'])]
    task = inp['task']
    URange  = [float(j) for j in inp['U'].split(',')]
-   WavefctType = inp['Wavefct'] 
+   WavefctType = inp['Wavefct']
    VCOR_FIT_TYPE = inp['FitType']
 
    Jobs = []
- 
+
    for nImp in nImps:
       #Fragments = [('CI(2)',list(range(nImp)))]
       if task=='La2CuO4':
@@ -278,58 +278,58 @@ def main(argv):
                   print "Actual electron number has non-degenerate ground state."
                #Occs = Occs[-1:] # <- only half filling
                for Occ in reversed(Occs):
-                 #for Occ in Occs:
-                 sp = 0
-                 #sp = 1 # spin polarization.
-                 #iOccA = AllowedOccupations.index(Occ)
-                 LatticeWf = FWfDecl(nElecA=Occ/2,
+               #for Occ in Occs:
+                  sp = 0
+                  #sp = 1 # spin polarization.
+                  #iOccA = AllowedOccupations.index(Occ)
+                  LatticeWf = FWfDecl(nElecA=Occ/2,
                               nElecB=Occ/2,
                               OrbType=WavefctType)
-                 #LatticeWf = FWfDecl(nElecA=AllowedOccupations[iOccA+sp],
-                 #               nElecB=AllowedOccupations[iOccA-sp],
-                 #               OrbType="UHF") #_UHF/RHF
-                 P = FParams1(
+                  #LatticeWf = FWfDecl(nElecA=AllowedOccupations[iOccA+sp],
+                  #               nElecB=AllowedOccupations[iOccA-sp],
+                  #               OrbType="UHF") #_UHF/RHF
+                  P = FParams1(
                     Model=Model,#ToClass(ModelParams),
                     SuperCell=ScParams,
                     LatticeWf=LatticeWf,
                     Fragments=Fragments)
                     #P.DMET.DiisStart = 0
                     #P.DMET.DiisThr = 1e-40
-                 P.DMET.MaxIt = 40
-                 P.DMET.VcorFitType = VCOR_FIT_TYPE
-                 P.MeanField.MaxIt = 1 # disable iterations.
-                 P.MeanField.DiisStart = 8
-                 P.InitialGuessSpinBias = None
-                 if 1:
-                    # add some bias to make the system preferrably go into
-                    # anti-ferromagnetic solutions. Otherwise we will always
-                    # get RHF solutions via UHF, even if the UHF solution is
-                    # lower.
-                    bias = ModelParams["U"]/2
-                    shift = 0.
-                    shift = ModelParams["U"]/2 if P.MeanField.MaxIt == 1 else 0.
-                    if P.LatticeWf.OrbType == "UHF":
-                       P.InitialGuessSpinBias = np.zeros(2*len(SuperCell.UnitCell))
-                       for (index, site) in enumerate(Fragments[0][1]):
-                          if index % 2 == 0:
-                             sign = 1
-                          else:
-                             sign = -1
-                          P.InitialGuessSpinBias[site * 2] += shift + sign * bias
-                          P.InitialGuessSpinBias[site * 2 + 1] += shift - sign * bias
-                    else:
-                       P.InitialGuessSpinBias = np.zeros(1*len(SuperCell.UnitCell))
-                       for site in Fragments[0][1]:
-                          P.InitialGuessSpinBias[site] = shift
-                 Jobs.append(FHub1dJob(P, InputJob=StartGuess))
-                 #print Jobs
-                 StartGuess = Jobs[-1]
-                 if 0:
-                    # enable this to propagate starting guesses from one U
-                    # to another. Here disabled for the honeycomb hubbard case,
-                    # because at some U between 3. and 4. the solution changes character.
-                    if StartGuessNextU is None:
-                       StartGuessNextU = Jobs[-1]
+                  P.DMET.MaxIt = 40
+                  P.DMET.VcorFitType = VCOR_FIT_TYPE
+                  P.MeanField.MaxIt = 1 # disable iterations.
+                  P.MeanField.DiisStart = 8
+                  P.InitialGuessSpinBias = None
+                  if 1:
+                     # add some bias to make the system preferrably go into
+                     # anti-ferromagnetic solutions. Otherwise we will always
+                     # get RHF solutions via UHF, even if the UHF solution is
+                     # lower.
+                     bias = ModelParams["U"]/2
+                     shift = 0.
+                     shift = ModelParams["U"]/2 if P.MeanField.MaxIt == 1 else 0.
+                     if P.LatticeWf.OrbType == "UHF":
+                        P.InitialGuessSpinBias = np.zeros(2*len(SuperCell.UnitCell))
+                        for (index, site) in enumerate(Fragments[0][1]):
+                           if index % 2 == 0:
+                              sign = 1
+                           else:
+                              sign = -1
+                           P.InitialGuessSpinBias[site * 2] += shift + sign * bias
+                           P.InitialGuessSpinBias[site * 2 + 1] += shift - sign * bias
+                     else:
+                        P.InitialGuessSpinBias = np.zeros(1*len(SuperCell.UnitCell))
+                        for site in Fragments[0][1]:
+                           P.InitialGuessSpinBias[site] = shift
+                  Jobs.append(FHub1dJob(P, InputJob=StartGuess))
+                  #print Jobs
+                  StartGuess = Jobs[-1]
+                  if 0:
+                     # enable this to propagate starting guesses from one U
+                     # to another. Here disabled for the honeycomb hubbard case,
+                     # because at some U between 3. and 4. the solution changes character.
+                     if StartGuessNextU is None:
+                        StartGuessNextU = Jobs[-1]
 
    def PrintJobResults(Log, JobsDone):
       with Log.Section("r%03x" % len(JobsDone), "RESULTS AFTER %i OF %i JOBS:" % (len(JobsDone), len(Jobs)), 1):
