@@ -300,7 +300,7 @@ class FLatticeSystem(object):
                Log(self.FmtRho,'Charge density', RdmT[0].real, '_')
                Log(self.FmtRho,'Spin density', RdmT[0].real, 'S')
             else:
-               Log(self.FmtRho,'Charge density', RdmT[0].real, '_')
+               Log(self.FmtRho,'Charge density', RdmT[0].real, 'A')
          Log()
          Log(pResultFmt, "1e energy", dot2(RdmT, self.CoreH)*EnergyFactor)
          Log(pResultFmt, "2e energy", .5*dot2(RdmT, FockT - self.CoreH)*EnergyFactor)
