@@ -115,12 +115,14 @@ class FHub1dJob(FJob):
             "Mu[A]": R["Mu"][0],
             "Mu[B]": R["Mu"][1],
             '<Sz>': (P.LatticeWf.nElecA() - P.LatticeWf.nElecB()) / (1.*R["nSites"]),
+            "nSites": R["nSites"],
          }
       else:
          assert(P.LatticeWf.OrbType == "RHF")
          Out = {
             "Mu": R["Mu"],
             "Gap": R["Gap"],
+            "nSites": R["nSites"]*2,
          }
       Out.update({
          "U": P.Model.U,
@@ -129,8 +131,8 @@ class FHub1dJob(FJob):
          "Fragments": P.Fragments,
          "E/Site": R["dmet"].TotalEnergy,
          "<n>[DMET]": R["dmet"].TotalElec,
-         '<n>': P.LatticeWf.nElec / (1.*R["nSites"]),
-         "nSites": R["nSites"]*int(P.LatticeWf.OrbOcc())/2,
+         #"nSites": R["nSites"]*int(P.LatticeWf.OrbOcc())/2,
+         '<n>': P.LatticeWf.nElec / (1.*Out["nSites"]),
          'ErrVcor': R["ErrVcor"]
       })
       return Out, {
@@ -245,10 +247,10 @@ def main(argv):
    for nImp in nImps:
       #Fragments = [('CI(2)',list(range(nImp)))]
       if task=='La2CuO4':
-         assert(nImp % 4 == 0)
-         ImpListOriginal = [0, 1, 14, 15]
+         assert(nImp % 2 == 0)
+         ImpListOriginal = [1, 6]
          ImpList = []
-         for j in range(nImp / 4):
+         for j in range(nImp / 2):
             ImpList += [i + 28*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_La2CuO4
@@ -285,7 +287,7 @@ def main(argv):
                SuperCell = FSuperCell(Model, **ScParams.__dict__)
                AllowedOccupations = SuperCell.CalcNonDegenerateOccupations(ThrDeg=1e-5)
                OccsNonDeg = AllowedOccupations[:len(AllowedOccupations)/2+1]
-               Occs = [SuperCell.nUnitCells*(nImp+(SuperCell.nSitesU-nImp)*2)]
+               Occs = [SuperCell.nUnitCells*(nImp*2/2+(SuperCell.nSitesU-nImp)*2)]
                if (Occs[0]/2.0 in  AllowedOccupations):
                   print "Actual electron number has non-degenerate ground state."
                #Occs = Occs[-1:] # <- only half filling
@@ -359,6 +361,8 @@ def main(argv):
    # gathering output
    dataoutput = {
       "U":[],
+      "J":[],
+      "Delta":[],
       "E":[],
       "Mu":[],
       "Gap":[],
@@ -368,6 +372,8 @@ def main(argv):
    for Job in Jobs:
       RdmHl = Job.Results["RdmHl"]
       dataoutput["U"].append(Job.Params.Model.U)
+      dataoutput["J"].append(Job.Params.Model.J)
+      dataoutput["Delta"].append(Job.Params.Model.Delta)
       dataoutput["E"].append(Job.Results["dmet"].TotalEnergy)
       if (Job.Params.LatticeWf.OrbType=="UHF"):
          dataoutput["Mu"].append(Job.Results["Mu"][0])
@@ -377,18 +383,21 @@ def main(argv):
          nImp = spinRdm.shape[0]
          AForder = np.trace(abs(spinRdm))/nImp 
          ddensity = np.trace(abs(chargeRdm))/nImp
+	 dataoutput["ddensity"].append(ddensity)
+         dataoutput["AFOrder"].append(AForder)
       else:
          dataoutput["Mu"].append(Job.Results["Mu"])
          dataoutput["Gap"].append(Job.Results["Gap"])
          dataoutput["AFOrder"].append(0)
          ddensity = np.trace(abs(RdmHl))/nImp
+	 dataoutput["ddensity"].append(ddensity)
       #chargeDensity=FmtRho('charge density',Jobs[i].Results["Rdm"],'_',Jobs[i].Params.LatticeWf.OrbType)
       #spinDensity=FmtRho('spin density',Job.Results["Rdm"],'S',Job.Params.LatticeWf.OrbType)
       #dataoutput["AFOrder"].append(abs(float(density1)-float(density2))/2)
 
-   filename = task
-   filename = filename+"Ln="+str(Ln)
-   filename = filename+'nImp='+str(nImp)
+   filename = task+argv[0]
+   #filename = filename+"_Ln="+str(Ln)
+   #filename = filename+'nImp='+str(nImp)
    filename = filename+'.pickle'
    resultfile = open(filename, 'w')
    p.dump(dataoutput, resultfile)
