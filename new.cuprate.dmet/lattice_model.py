@@ -19,10 +19,13 @@
 import numpy as np
 import scipy.linalg as la
 import itertools as it
-from hoppingCu import *
-from hoppingNi import *
+from hoppingWriteCu import * 
+#from hoppingCu import *
+#from hoppingNi import *
    
 # TODO: consider replacing UnitCell by just Cell
+def key2str(x,y,z,orb1,orb2):
+    return "(%.4f, %.4f, %.4f), %d, %d" %(x,y,z,orb1,orb2)
 
 def is_square(M):
    return len(M.shape) == 2 and M.shape[0] == M.shape[1]
@@ -208,6 +211,135 @@ class FHubbardModel_La2CuO4(FLatticeModel):
    def __init__(self, t, U, J, Delta):
       UnitCell = []
       #fractional coords
+      UnitCell.append( ("Cu1z2", np.array([0,  0,  0])) ) #1d-orbital d_z2
+      UnitCell.append( ("Cu1x2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2y2 
+      UnitCell.append( ("Cu1xz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
+      UnitCell.append( ("Cu1yz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
+      UnitCell.append( ("Cu1xy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
+
+      UnitCell.append( ("Cu2z2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      UnitCell.append( ("Cu2x2-y2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_x2y2
+      UnitCell.append( ("Cu2xz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      UnitCell.append( ("Cu2yz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      UnitCell.append( ("Cu2xy", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+
+      UnitCell.append( ("O1z", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O1x", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O1y", np.array([0,  0.5,  0])) ) #p-orbital
+    
+      UnitCell.append( ("O2z", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O2x", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O2y", np.array([0.5,  0,  0])) ) #p-orbital
+      
+      UnitCell.append( ("O3z", np.array([0.5,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3x", np.array([0.5,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3y", np.array([0.5,  0,  0.5])) ) #p-orbital
+      
+      UnitCell.append( ("O4z", np.array([0,  0.5,  0.5])) ) #p-orbital
+      UnitCell.append( ("O4x", np.array([0,  0.5,  0.5])) ) #p-orbital
+      UnitCell.append( ("O4y", np.array([0,  0.5,  0.5])) ) #p-orbital
+
+      UnitCell.append( ("O5z", np.array([0,  0, 0.1858])) ) #p-orbital
+      UnitCell.append( ("O5x", np.array([0,  0, 0.1858])) ) #p-orbital
+      UnitCell.append( ("O5y", np.array([0,  0, 0.1858])) ) #p-orbital
+      
+      UnitCell.append( ("O6z", np.array([0,  0, 0.8142]))  )#p-orbital
+      UnitCell.append( ("O6x", np.array([0,  0, 0.8142]))  )#p-orbital
+      UnitCell.append( ("O6y", np.array([0,  0, 0.8142]))  )#p-orbital
+      
+      UnitCell.append( ("O7z", np.array([0.5,  0.5, 0.6858])) ) #p-orbital
+      UnitCell.append( ("O7x", np.array([0.5,  0.5, 0.6858])) ) #p-orbital
+      UnitCell.append( ("O7y", np.array([0.5,  0.5, 0.6858])) ) #p-orbital
+      
+      UnitCell.append( ("O8z", np.array([0.5,  0.5, 0.3142])) ) #p-orbital
+      UnitCell.append( ("O8x", np.array([0.5,  0.5, 0.3142])) ) #p-orbital
+      UnitCell.append( ("O8y", np.array([0.5,  0.5, 0.3142])) ) #p-orbital
+      
+      self.t = t
+      self.U = U
+      self.J = J
+      self.Delta = Delta
+
+      LatticeVectors = np.zeros((3,3),int)
+      LatticeVectors[0,:] = [1.,0.0,0.0]
+      LatticeVectors[1,:] = [0.0,1.,0.0]
+      LatticeVectors[2,:] = [0.0,0.0,1.]
+      # FIXMEL MaxRangeT and EnergyFactor are not adapted to the model 
+      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/4)
+
+   def MakeTijMatrix(self, SitesR, SitesC):
+      """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
+      matrix."""
+      CoreH = np.zeros((len(SitesR), len(SitesC)))
+      SiteType = {"Cu1z2": 0,
+                  "Cu1x2-y2": 3,
+                  "Cu1xz": 1,
+                  "Cu1yz": 2,
+                  "Cu1xy": 4,
+                  "Cu2z2": 5,
+                  "Cu2x2-y2": 8,
+                  "Cu2xz": 6,
+                  "Cu2yz": 7,
+                  "Cu2xy": 9,
+                  "O1z":  10,
+                  "O1x":  11,
+                  "O1y":  12,
+                  "O2z":  13,
+                  "O2x":  14,
+                  "O2y":  15,
+                  "O3z":  16,
+                  "O3x":  17,
+                  "O3y":  18,
+                  "O4z":  19,
+                  "O4x":  20,
+                  "O4y":  21,
+                  "O5z":  22,
+                  "O5x":  23,
+                  "O5y":  24,
+                  "O6z":  25,
+                  "O6x":  26,
+                  "O6y":  27,
+                  "O7z":  28,
+                  "O7x":  29,
+                  "O7y":  30,
+                  "O8z":  31,
+                  "O8x":  32,
+                  "O8y":  33
+      }
+      for i in range(len(SitesR)/len(SiteType)):
+         dXyz = SitesR[i*len(SiteType)][1]-SitesC[0][1]
+         dXyz = [int(dx) for dx in dXyz]
+         if abs(dXyz[0]) < 6 and abs(dXyz[1]) < 6 and abs(dXyz[2]) < 6:
+            index = (dXyz[0]+5)*121+(dXyz[1]+5)*11+dXyz[2]+5
+            CoreH[i*len(SiteType):(i+1)*len(SiteType),:] = hopping2Cu5d[index,:,:]
+            if index == 665:    
+               CoreH[i*len(SiteType):(i*len(SiteType)+10),:10] -= self.Delta*np.eye(10)
+      #for (iSiteR, SiteR) in enumerate(SitesR):
+      #   TypeR = SiteType[SiteR[0]]
+      #   for (iSiteC, SiteC) in enumerate(SitesC):
+      #      dXyz = SiteR[1] - SiteC[1]
+      #      TypeC = SiteType[SiteC[0]]
+      #      if ((dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC) in HoppingTCu:
+      #         CoreH[iSiteR,iSiteC] = HoppingTCu[(dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC]
+      #      if TypeC == TypeR and TypeC in range(10) and sum(abs(dXyz)) == 0.0:
+      #         CoreH[iSiteR,iSiteC] -= self.Delta
+      return CoreH
+      
+   def GetUi(self, (SiteTypeI,XyzI)):
+     if (SiteTypeI[:2]=='Cu'): return self.U 
+     else: return 0
+   
+   def GetJi(self, (SiteTypeI,XyzI), (SiteTypeJ, XyzJ)):
+      dXyz = XyzJ - XyzI
+      if ((SiteTypeI[:2]=='Cu') and (SiteTypeJ[:2] =='Cu') and sum(abs(dXyz)) == 0): return self.J 
+      else: return 0
+
+
+class FHubbardModel_La2CuO4_2orbital(FLatticeModel):
+   """The infinite 3d Hubbard model for La_2CuO_4 (no La sites included, but 2d orb for each Cu and 3p orbs for each O)"""
+   def __init__(self, t, U, J, Delta):
+      UnitCell = []
+      #fractional coords
       UnitCell.append( ("Cu11", np.array([0,  0,  0])) ) #1d-orbital d_x2y2 
       UnitCell.append( ("Cu12", np.array([0,  0,  0])) ) #1d-orbital d_z2 
       UnitCell.append( ("O1z", np.array([0,  0.5,  0])) ) #p-orbital
@@ -319,8 +451,12 @@ class FHubbardModel_LaNiO3(FLatticeModel):
    def __init__(self, t, U, J, Delta):
       UnitCell = []
       #absolute coords
-      UnitCell.append( ("Ni1", np.array([0,  0,  0])) ) #1d-orbital d_x2y2 
-      UnitCell.append( ("Ni2", np.array([0,  0,  0])) ) #1d-orbital d_z2 
+      UnitCell.append( ("Niz2", np.array([0,  0,  0])) ) #1d-orbital d_z2 
+      UnitCell.append( ("Nix2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2-y2 
+      UnitCell.append( ("Nixz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
+      UnitCell.append( ("Niyz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
+      UnitCell.append( ("Nixy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
+
       UnitCell.append( ("O1z", np.array([0.5,  0,  0])) ) #p-orbital
       UnitCell.append( ("O1x", np.array([0.5,  0,  0])) ) #p-orbital
       UnitCell.append( ("O1y", np.array([0.5,  0,  0])) ) #p-orbital
@@ -351,28 +487,45 @@ class FHubbardModel_LaNiO3(FLatticeModel):
       matrix."""
       CoreH = np.zeros((len(SitesR), len(SitesC)))
       
-      SiteType = {'Ni1': 0,
-                  'Ni2': 1,
-                  'O1z':  2,
-                  'O1x':  3,
-                  'O1y':  4,
-                  'O2z':  5,
-                  'O2x':  6,
-                  'O2y':  7,
-                  'O3z':  8,
-                  'O3x':  9,
-                  'O3y':  10,
+      SiteType = {'Niz2': 0,
+                  'Nix2-y2': 1,
+                  'Nixz': 2,
+                  'Niyz': 3,
+                  'Nixy': 4,
+                  'O1z':  5,
+                  'O1x':  6,
+                  'O1y':  7,
+                  'O2z':  8,
+                  'O2x':  9,
+                  'O2y':  10,
+                  'O3z':  11,
+                  'O3x':  12,
+                  'O3y':  13,
                   }
 
-      for (iSiteC, SiteC) in enumerate(SitesC):
-         TypeC = SiteType[SiteC[0]]
-         for (iSiteR, SiteR) in enumerate(SitesR):
-            dXyz = SiteR[1] - SiteC[1]
-            TypeR = SiteType[SiteR[0]]
-            if ((dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC) in HoppingTNi:
-               CoreH[iSiteR,iSiteC] = HoppingTNi[(dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC]
-            if TypeC == TypeR and TypeC in [0, 1] and sum(abs(dXyz)) == 0.0:
-               CoreH[iSiteR,iSiteC] -= self.Delta
+      for i in range(len(SitesR)/len(SiteType)):
+         dXyz = SitesR[i*len(SiteType)][1]-SitesC[0][1]
+         dXyz = [int(dx) for dx in dXyz]
+         if abs(dXyz[0]) < 6 and abs(dXyz[1]) < 6 and abs(dXyz[2]) < 6:
+            index = (dXyz[0]+5)*121+(dXyz[1]+5)*11+dXyz[2]+5
+            CoreH[i*len(SiteType):(i+1)*len(SiteType),:] = hoppingNi5d[index,:,:]
+            #if index == 665:    
+            if dXyz == [0,0,0]:    
+               #CoreH[i*len(SiteType):(i*len(SiteType)+5),:5] -= self.Delta*np.eye(5)
+               CoreH[i*len(SiteType),0] -= self.Delta
+               CoreH[i*len(SiteType)+1,1] -= self.Delta
+               CoreH[i*len(SiteType)+2,2] -= self.Delta
+               CoreH[i*len(SiteType)+3,3] -= self.Delta
+               CoreH[i*len(SiteType)+4,4] -= self.Delta
+      #for (iSiteC, SiteC) in enumerate(SitesC):
+      #   TypeC = SiteType[SiteC[0]]
+      #   for (iSiteR, SiteR) in enumerate(SitesR):
+      #      dXyz = SiteR[1] - SiteC[1]
+      #      TypeR = SiteType[SiteR[0]]
+      #      if ((dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC) in HoppingTNi:
+      #         CoreH[iSiteR,iSiteC] = HoppingTNi[(dXyz[0], dXyz[1], dXyz[2]), TypeR, TypeC]
+      #      if TypeC == TypeR and TypeC in [0, 1] and sum(abs(dXyz)) == 0.0:
+      #         CoreH[iSiteR,iSiteC] -= self.Delta
       return CoreH
  
    def GetUi(self, (SiteTypeI,XyzI)):
