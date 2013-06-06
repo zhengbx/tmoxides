@@ -46,6 +46,7 @@ class FParams1(FDefaultParams):
       self.Model = Model
       self.SuperCell = SuperCell
       self.Fragments = Fragments
+      #self.CoreH = CoreH
 
       self.MeanField.MaxIt = 40
       self.DMET.UseInt2e = False
@@ -251,7 +252,7 @@ def main(argv):
          ImpListOriginal = [1, 6]
          ImpList = []
          for j in range(nImp / 2):
-            ImpList += [i + 28*j for i in ImpListOriginal]
+            ImpList += [i + 34*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_La2CuO4
          ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
@@ -260,7 +261,7 @@ def main(argv):
          ImpListOriginal = [0, 1]
          ImpList = []
          for j in range(nImp / 2):
-           ImpList += [i + 11*j for i in ImpListOriginal]
+           ImpList += [i + 14*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_LaNiO3
          ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
@@ -404,5 +405,9 @@ def main(argv):
    resultfile.close()
    print "Result File:", filename
 
+import time
+time1 = time.clock()
 main(sys.argv[1:])
+time2 = time.clock()
+print "the time used is:", time2-time1
 
