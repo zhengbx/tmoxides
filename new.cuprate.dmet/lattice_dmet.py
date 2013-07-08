@@ -249,22 +249,64 @@ def main(argv):
       #Fragments = [('CI(2)',list(range(nImp)))]
       if task=='La2CuO4':
          assert(nImp % 2 == 0)
-         ImpListOriginal = [1, 6]
+         ImpListOriginal = [0, 1]
          ImpList = []
          for j in range(nImp / 2):
-            ImpList += [i + 34*j for i in ImpListOriginal]
+            ImpList += [i + 26*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_La2CuO4
          ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
+         factor = 6
       elif task=='LaNiO3':
          assert(nImp % 2 == 0)
          ImpListOriginal = [0, 1]
          ImpList = []
          for j in range(nImp / 2):
-           ImpList += [i + 14*j for i in ImpListOriginal]
+           ImpList += [i + 11*j for i in ImpListOriginal]
          Fragments = [('FCI', ImpList)]
          FModelClass = FHubbardModel_LaNiO3
          ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
+         factor = 3
+      elif task=='La2CuO4_1Cu':
+         assert(nImp % 1 == 0)
+         ImpListOriginal = [0]
+         ImpList = []
+         for j in range(nImp / 1):
+            ImpList += [i + 13*j for i in ImpListOriginal]
+         Fragments = [('FCI', ImpList)]
+         FModelClass = FHubbardModel_La2CuO4_1Cu
+         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln*2], 'PhaseShift': PShift, 'ClusterSize': Cl})
+         factor = 6
+      elif task=='LaTiO3':
+         assert(nImp % 3 == 0)
+         ImpListOriginal = [0, 1, 2]
+         ImpList = []
+         for j in range(nImp / 3):
+           ImpList += [i + 12*j for i in ImpListOriginal]
+         Fragments = [('FCI', ImpList)]
+         FModelClass = FHubbardModel_LaTiO3
+         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
+         factor = 2
+      elif task=='LaVO3':
+         assert(nImp % 3 == 0)
+         ImpListOriginal = [0, 1, 2]
+         ImpList = []
+         for j in range(nImp / 3):
+           ImpList += [i + 12*j for i in ImpListOriginal]
+         Fragments = [('FCI', ImpList)]
+         FModelClass = FHubbardModel_LaVO3
+         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
+         factor = 4
+      elif task=='LaCrO3':
+         assert(nImp % 3 == 0)
+         ImpListOriginal = [0, 1, 2]
+         ImpList = []
+         for j in range(nImp / 3):
+           ImpList += [i + 12*j for i in ImpListOriginal]
+         Fragments = [('FCI', ImpList)]
+         FModelClass = FHubbardModel_LaCrO3
+         ScParams = ToClass({'TotalSize': [Ln,Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
+         factor = 6
       else:
          FModelClass = FHubbardModel2dSquare
          ScParams = ToClass({'TotalSize': [Ln,Ln], 'PhaseShift': PShift, 'ClusterSize': Cl})
@@ -288,7 +330,7 @@ def main(argv):
                SuperCell = FSuperCell(Model, **ScParams.__dict__)
                AllowedOccupations = SuperCell.CalcNonDegenerateOccupations(ThrDeg=1e-5)
                OccsNonDeg = AllowedOccupations[:len(AllowedOccupations)/2+1]
-               Occs = [SuperCell.nUnitCells*(nImp*2/2+(SuperCell.nSitesU-nImp)*2)]
+               Occs = [SuperCell.nUnitCells*(nImp*factor/6+(SuperCell.nSitesU-nImp)*2)]
                if (Occs[0]/2.0 in  AllowedOccupations):
                   print "Actual electron number has non-degenerate ground state."
                #Occs = Occs[-1:] # <- only half filling
@@ -384,14 +426,14 @@ def main(argv):
          nImp = spinRdm.shape[0]
          AForder = np.trace(abs(spinRdm))/nImp 
          ddensity = np.trace(abs(chargeRdm))/nImp
-	 dataoutput["ddensity"].append(ddensity)
+         dataoutput["ddensity"].append(ddensity)
          dataoutput["AFOrder"].append(AForder)
       else:
          dataoutput["Mu"].append(Job.Results["Mu"])
          dataoutput["Gap"].append(Job.Results["Gap"])
          dataoutput["AFOrder"].append(0)
          ddensity = np.trace(abs(RdmHl))/nImp
-	 dataoutput["ddensity"].append(ddensity)
+         dataoutput["ddensity"].append(ddensity)
       #chargeDensity=FmtRho('charge density',Jobs[i].Results["Rdm"],'_',Jobs[i].Params.LatticeWf.OrbType)
       #spinDensity=FmtRho('spin density',Job.Results["Rdm"],'S',Job.Params.LatticeWf.OrbType)
       #dataoutput["AFOrder"].append(abs(float(density1)-float(density2))/2)

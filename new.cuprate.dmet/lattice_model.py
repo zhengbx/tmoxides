@@ -20,6 +20,7 @@ import numpy as np
 import scipy.linalg as la
 import itertools as it
 from hoppingWriteCu import * 
+from hoppingWriteV import * 
 #from hoppingCu import *
 #from hoppingNi import *
    
@@ -211,17 +212,17 @@ class FHubbardModel_La2CuO4(FLatticeModel):
    def __init__(self, t, U, J, Delta):
       UnitCell = []
       #fractional coords
-      UnitCell.append( ("Cu1z2", np.array([0,  0,  0])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu1z2", np.array([0,  0,  0])) ) #1d-orbital d_z2
       UnitCell.append( ("Cu1x2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2y2 
-      UnitCell.append( ("Cu1xz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
-      UnitCell.append( ("Cu1yz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
-      UnitCell.append( ("Cu1xy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
+      #UnitCell.append( ("Cu1xz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
+      #UnitCell.append( ("Cu1yz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
+      #UnitCell.append( ("Cu1xy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
 
-      UnitCell.append( ("Cu2z2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2z2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
       UnitCell.append( ("Cu2x2-y2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_x2y2
-      UnitCell.append( ("Cu2xz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
-      UnitCell.append( ("Cu2yz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
-      UnitCell.append( ("Cu2xy", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2xz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2yz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2xy", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
 
       UnitCell.append( ("O1z", np.array([0,  0.5,  0])) ) #p-orbital
       UnitCell.append( ("O1x", np.array([0,  0.5,  0])) ) #p-orbital
@@ -271,16 +272,16 @@ class FHubbardModel_La2CuO4(FLatticeModel):
       """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
       matrix."""
       CoreH = np.zeros((len(SitesR), len(SitesC)))
-      SiteType = {"Cu1z2": 0,
+      SiteType = {#"Cu1z2": 0,
                   "Cu1x2-y2": 3,
-                  "Cu1xz": 1,
-                  "Cu1yz": 2,
-                  "Cu1xy": 4,
-                  "Cu2z2": 5,
+                  #"Cu1xz": 1,
+                  #"Cu1yz": 2,
+                  #"Cu1xy": 4,
+                  #"Cu2z2": 5,
                   "Cu2x2-y2": 8,
-                  "Cu2xz": 6,
-                  "Cu2yz": 7,
-                  "Cu2xy": 9,
+                  #"Cu2xz": 6,
+                  #"Cu2yz": 7,
+                  #"Cu2xy": 9,
                   "O1z":  10,
                   "O1x":  11,
                   "O1y":  12,
@@ -313,9 +314,11 @@ class FHubbardModel_La2CuO4(FLatticeModel):
             dXyz = [int(dx) for dx in dXyz]
             if abs(dXyz[0]) < 6 and abs(dXyz[1]) < 6 and abs(dXyz[2]) < 6:
                index = (dXyz[0]+5)*121+(dXyz[1]+5)*11+dXyz[2]+5
-               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hopping2Cu5d[index,:,:]
+               #print dXyz,index
+               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hopping2Cu1d[index,:,:]
                if index == 665:    
-                  CoreH[i*nUSites:(i*nUSites+10),j*nUSites:(j*nUSites+10)] -= self.Delta*np.eye(10)
+                  CoreH[i*nUSites:(i*nUSites+2),j*nUSites:(j*nUSites+2)] -= self.Delta*np.eye(2)
+      #raise SystemExit
       #for (iSiteR, SiteR) in enumerate(SitesR):
       #   TypeR = SiteType[SiteR[0]]
       #   for (iSiteC, SiteC) in enumerate(SitesC):
@@ -342,26 +345,12 @@ class FHubbardModel_La2CuO4_1Cu(FLatticeModel):
    def __init__(self, t, U, J, Delta):
       UnitCell = []
       #fractional coords
-      #UnitCell.append( ("Cu1z2", np.array([0,  0,  0])) ) #1d-orbital d_z2
-      #UnitCell.append( ("Cu1x2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2y2 
-      #UnitCell.append( ("Cu1xz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
-      #UnitCell.append( ("Cu1yz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
-      #UnitCell.append( ("Cu1xy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
-
-      UnitCell.append( ("Cu2z2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2z2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
       UnitCell.append( ("Cu2x2-y2", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_x2y2
-      UnitCell.append( ("Cu2xz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
-      UnitCell.append( ("Cu2yz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
-      UnitCell.append( ("Cu2xy", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2xz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2yz", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
+      #UnitCell.append( ("Cu2xy", np.array([ 0.5,   0.5,  0.5])) ) #1d-orbital d_z2
 
-      #UnitCell.append( ("O1z", np.array([0,  0.5,  0])) ) #p-orbital
-      #UnitCell.append( ("O1x", np.array([0,  0.5,  0])) ) #p-orbital
-      #UnitCell.append( ("O1y", np.array([0,  0.5,  0])) ) #p-orbital
-    
-      #UnitCell.append( ("O2z", np.array([0.5,  0,  0])) ) #p-orbital
-      #UnitCell.append( ("O2x", np.array([0.5,  0,  0])) ) #p-orbital
-      #UnitCell.append( ("O2y", np.array([0.5,  0,  0])) ) #p-orbital
-      
       UnitCell.append( ("O3z", np.array([0.5,  0,  0.5])) ) #p-orbital
       UnitCell.append( ("O3x", np.array([0.5,  0,  0.5])) ) #p-orbital
       UnitCell.append( ("O3y", np.array([0.5,  0,  0.5])) ) #p-orbital
@@ -369,14 +358,6 @@ class FHubbardModel_La2CuO4_1Cu(FLatticeModel):
       UnitCell.append( ("O4z", np.array([0,  0.5,  0.5])) ) #p-orbital
       UnitCell.append( ("O4x", np.array([0,  0.5,  0.5])) ) #p-orbital
       UnitCell.append( ("O4y", np.array([0,  0.5,  0.5])) ) #p-orbital
-      
-      #UnitCell.append( ("O5z", np.array([0,  0, 0.1858])) ) #p-orbital
-      #UnitCell.append( ("O5x", np.array([0,  0, 0.1858])) ) #p-orbital
-      #UnitCell.append( ("O5y", np.array([0,  0, 0.1858])) ) #p-orbital
-      
-      #UnitCell.append( ("O6z", np.array([0,  0, 0.8142]))  )#p-orbital
-      #UnitCell.append( ("O6x", np.array([0,  0, 0.8142]))  )#p-orbital
-      #UnitCell.append( ("O6y", np.array([0,  0, 0.8142]))  )#p-orbital
       
       UnitCell.append( ("O7z", np.array([0.5,  0.5, 0.6858])) ) #p-orbital
       UnitCell.append( ("O7x", np.array([0.5,  0.5, 0.6858])) ) #p-orbital
@@ -394,7 +375,7 @@ class FHubbardModel_La2CuO4_1Cu(FLatticeModel):
       LatticeVectors = np.zeros((3,3),int)
       LatticeVectors[0,:] = [1.0,0.0,0.0]
       LatticeVectors[1,:] = [0.0,1.0,0.0]
-      LatticeVectors[2,:] = [0.5,0.5,0.5]
+      LatticeVectors[2,:] = [0.0,0.0,1.0]
       # FIXMEL MaxRangeT and EnergyFactor are not adapted to the model 
       FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/1)
 
@@ -402,11 +383,11 @@ class FHubbardModel_La2CuO4_1Cu(FLatticeModel):
       """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
       matrix."""
       CoreH = np.zeros((len(SitesR), len(SitesC)))
-      SiteType = {'Cu2z2': 0,
+      SiteType = {#'Cu2z2': 0,
                   'Cu2x2-y2': 1,
-                  'Cu2xz': 2,
-                  'Cu2yz': 3,
-                  'Cu2xy': 4,
+                  #'Cu2xz': 2,
+                  #'Cu2yz': 3,
+                  #'Cu2xy': 4,
                   'O3z':  5,
                   'O3x':  6,
                   'O3y':  7,
@@ -420,16 +401,20 @@ class FHubbardModel_La2CuO4_1Cu(FLatticeModel):
                   'O8x': 15,
                   'O8y': 16
                   }
+      #print SitesR[34*0:34*1]
+      #raise SystemExit
       nUSites = len(SiteType)
       for i in range(len(SitesR)/nUSites):
          for j in range(len(SitesC)/nUSites):
             dXyz = SitesR[i*nUSites][1]-SitesC[j*nUSites][1]
             dXyz = [int(dx) for dx in dXyz]
-            if abs(dXyz[0]) < 6 and abs(dXyz[1]) < 6 and abs(dXyz[2]) < 6:
-               index = (dXyz[0]+5)*121+(dXyz[1]+5)*11+dXyz[2]+5
-               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hopping1Cu5d[index,:,:]
-               if index == 665:    
-                  CoreH[i*nUSites:(i*nUSites+5),j*nUSites:(j*nUSites+5)] -= self.Delta*np.eye(5)
+            if abs(dXyz[0]) < 6 and abs(dXyz[1]) < 6 and dXyz[2] in range(-11,10):
+               index = (dXyz[0]+5)*242+(dXyz[1]+5)*22+dXyz[2]+11
+               #print dXyz,index
+               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hopping1Cu1d[index,:,:]
+               if index == 1331:    
+                  CoreH[i*nUSites:(i*nUSites+1),j*nUSites:(j*nUSites+1)] -= self.Delta*np.eye(1)
+      #raise SystemExit
       #for (iSiteC, SiteC) in enumerate(SitesC):
       #   TypeC = SiteType[SiteC[0]]
       #   for (iSiteR, SiteR) in enumerate(SitesR):
@@ -462,9 +447,9 @@ class FHubbardModel_LaNiO3(FLatticeModel):
       #absolute coords
       UnitCell.append( ("Niz2", np.array([0,  0,  0])) ) #1d-orbital d_z2 
       UnitCell.append( ("Nix2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2-y2 
-      UnitCell.append( ("Nixz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
-      UnitCell.append( ("Niyz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
-      UnitCell.append( ("Nixy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
+      #UnitCell.append( ("Nixz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
+      #UnitCell.append( ("Niyz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
+      #UnitCell.append( ("Nixy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
 
       UnitCell.append( ("O1z", np.array([0.5,  0,  0])) ) #p-orbital
       UnitCell.append( ("O1x", np.array([0.5,  0,  0])) ) #p-orbital
@@ -498,9 +483,9 @@ class FHubbardModel_LaNiO3(FLatticeModel):
       
       SiteType = {'Niz2': 0,
                   'Nix2-y2': 1,
-                  'Nixz': 2,
-                  'Niyz': 3,
-                  'Nixy': 4,
+                  #'Nixz': 2,
+                  #'Niyz': 3,
+                  #'Nixy': 4,
                   'O1z':  5,
                   'O1x':  6,
                   'O1y':  7,
@@ -519,9 +504,9 @@ class FHubbardModel_LaNiO3(FLatticeModel):
             dXyz = [int(dx) for dx in dXyz]
             if abs(dXyz[0]) < 6 and abs(dXyz[1]) < 6 and abs(dXyz[2]) < 6:
                index = (dXyz[0]+5)*121+(dXyz[1]+5)*11+dXyz[2]+5
-               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hoppingNi5d[index,:,:]
+               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hoppingNi2d[index,:,:]
                if index == 665:    
-                  CoreH[i*nUSites:(i*nUSites+5),j*nUSites:(j*nUSites+5)] -= self.Delta*np.eye(5)
+                  CoreH[i*nUSites:(i*nUSites+2),j*nUSites:(j*nUSites+2)] -= self.Delta*np.eye(2)
       #for (iSiteC, SiteC) in enumerate(SitesC):
       #   TypeC = SiteType[SiteC[0]]
       #   for (iSiteR, SiteR) in enumerate(SitesR):
@@ -541,6 +526,241 @@ class FHubbardModel_LaNiO3(FLatticeModel):
       dXyz = XyzJ - XyzI
       if ((SiteTypeI[:2]=='Ni') and (SiteTypeJ[:2] =='Ni') and sum(abs(dXyz)) == 0): return self.J
       else: return 0
+
+class FHubbardModel_LaVO3(FLatticeModel):
+   """The infinite 3d Hubbard model for LaNiO_3 (no La sites included, but 2d orb for each Ni and 3p orbs for each O)"""
+   def __init__(self, t, U, J, Delta):
+      UnitCell = []
+      #absolute coords
+      #UnitCell.append( ("Niz2", np.array([0,  0,  0])) ) #1d-orbital d_z2 
+      #UnitCell.append( ("Nix2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2-y2 
+      UnitCell.append( ("Vxz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
+      UnitCell.append( ("Vyz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
+      UnitCell.append( ("Vxy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
+
+      UnitCell.append( ("O1z", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O1x", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O1y", np.array([0.5,  0,  0])) ) #p-orbital
+    
+      UnitCell.append( ("O2z", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O2x", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O2y", np.array([0,  0.5,  0])) ) #p-orbital
+      
+      UnitCell.append( ("O3z", np.array([0,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3x", np.array([0,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3y", np.array([0,  0,  0.5])) ) #p-orbital
+      
+      self.t = t
+      self.U = U
+      self.J = J
+      self.Delta = Delta
+
+      LatticeVectors = np.zeros((3,3), float)
+      LatticeVectors[0,:] = [1.,0.0,0.0]
+      LatticeVectors[1,:] = [0.0,1.,0.0]
+      LatticeVectors[2,:] = [0.0,0.0,1.]
+      # FIXMEL MaxRangeT and EnergyFactor are not adapted to the model 
+      # MaxRangeT should be larger than sqrt(3)
+      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/2)
+
+   def MakeTijMatrix(self, SitesR, SitesC):
+      """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
+      matrix."""
+      CoreH = np.zeros((len(SitesR), len(SitesC)))
+      
+      SiteType = {#'Niz2': 0,
+                  #'Nix2-y2': 1,
+                  'Vxz': 2,
+                  'Vyz': 3,
+                  'Vxy': 4,
+                  'O1z':  5,
+                  'O1x':  6,
+                  'O1y':  7,
+                  'O2z':  8,
+                  'O2x':  9,
+                  'O2y':  10,
+                  'O3z':  11,
+                  'O3x':  12,
+                  'O3y':  13,
+                  }
+
+      nUSites = len(SiteType)
+      for i in range(len(SitesR)/nUSites):
+         for j in range(len(SitesC)/nUSites):
+            dXyz = SitesR[i*nUSites][1]-SitesC[j*nUSites][1]
+            dXyz = [int(dx) for dx in dXyz]
+            if abs(dXyz[0]) < 3 and abs(dXyz[1]) < 3 and abs(dXyz[2]) < 3:
+               index = (dXyz[0]+2)*25+(dXyz[1]+2)*5+dXyz[2]+2
+               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hoppingV3d[index,:,:]
+               if index == 62:    
+                  CoreH[i*nUSites:(i*nUSites+3),j*nUSites:(j*nUSites+3)] -= self.Delta*np.eye(3)
+      return CoreH
+ 
+   def GetUi(self, (SiteTypeI,XyzI)):
+      if (SiteTypeI[:1]=='V'): return self.U 
+      else: return 0
+   
+   def GetJi(self, (SiteTypeI,XyzI), (SiteTypeJ, XyzJ)):
+      dXyz = XyzJ - XyzI
+      if ((SiteTypeI[:1]=='V') and (SiteTypeJ[:2] =='V') and sum(abs(dXyz)) == 0): return self.J
+      else: return 0
+
+class FHubbardModel_LaTiO3(FLatticeModel):
+   """The infinite 3d Hubbard model for LaNiO_3 (no La sites included, but 2d orb for each Ni and 3p orbs for each O)"""
+   def __init__(self, t, U, J, Delta):
+      UnitCell = []
+      #absolute coords
+      #UnitCell.append( ("Niz2", np.array([0,  0,  0])) ) #1d-orbital d_z2 
+      #UnitCell.append( ("Nix2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2-y2 
+      UnitCell.append( ("Tixz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
+      UnitCell.append( ("Tiyz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
+      UnitCell.append( ("Tixy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
+
+      UnitCell.append( ("O1z", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O1x", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O1y", np.array([0.5,  0,  0])) ) #p-orbital
+    
+      UnitCell.append( ("O2z", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O2x", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O2y", np.array([0,  0.5,  0])) ) #p-orbital
+      
+      UnitCell.append( ("O3z", np.array([0,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3x", np.array([0,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3y", np.array([0,  0,  0.5])) ) #p-orbital
+      
+      self.t = t
+      self.U = U
+      self.J = J
+      self.Delta = Delta
+
+      LatticeVectors = np.zeros((3,3), float)
+      LatticeVectors[0,:] = [1.,0.0,0.0]
+      LatticeVectors[1,:] = [0.0,1.,0.0]
+      LatticeVectors[2,:] = [0.0,0.0,1.]
+      # FIXMEL MaxRangeT and EnergyFactor are not adapted to the model 
+      # MaxRangeT should be larger than sqrt(3)
+      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/2)
+
+   def MakeTijMatrix(self, SitesR, SitesC):
+      """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
+      matrix."""
+      CoreH = np.zeros((len(SitesR), len(SitesC)))
+      
+      SiteType = {#'Niz2': 0,
+                  #'Nix2-y2': 1,
+                  'Tixz': 2,
+                  'Tiyz': 3,
+                  'Tixy': 4,
+                  'O1z':  5,
+                  'O1x':  6,
+                  'O1y':  7,
+                  'O2z':  8,
+                  'O2x':  9,
+                  'O2y':  10,
+                  'O3z':  11,
+                  'O3x':  12,
+                  'O3y':  13,
+                  }
+
+      nUSites = len(SiteType)
+      for i in range(len(SitesR)/nUSites):
+         for j in range(len(SitesC)/nUSites):
+            dXyz = SitesR[i*nUSites][1]-SitesC[j*nUSites][1]
+            dXyz = [int(dx) for dx in dXyz]
+            if abs(dXyz[0]) < 3 and abs(dXyz[1]) < 3 and abs(dXyz[2]) < 3:
+               index = (dXyz[0]+2)*25+(dXyz[1]+2)*5+dXyz[2]+2
+               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hoppingTi3d[index,:,:]
+               if index == 62:    
+                  CoreH[i*nUSites:(i*nUSites+3),j*nUSites:(j*nUSites+3)] -= self.Delta*np.eye(3)
+      return CoreH
+ 
+   def GetUi(self, (SiteTypeI,XyzI)):
+      if (SiteTypeI[:2]=='Ti'): return self.U 
+      else: return 0
+   
+   def GetJi(self, (SiteTypeI,XyzI), (SiteTypeJ, XyzJ)):
+      dXyz = XyzJ - XyzI
+      if ((SiteTypeI[:2]=='Ti') and (SiteTypeJ[:2] =='Ti') and sum(abs(dXyz)) == 0): return self.J
+      else: return 0
+
+class FHubbardModel_LaCrO3(FLatticeModel):
+   """The infinite 3d Hubbard model for LaNiO_3 (no La sites included, but 2d orb for each Ni and 3p orbs for each O)"""
+   def __init__(self, t, U, J, Delta):
+      UnitCell = []
+      #absolute coords
+      #UnitCell.append( ("Niz2", np.array([0,  0,  0])) ) #1d-orbital d_z2 
+      #UnitCell.append( ("Nix2-y2", np.array([0,  0,  0])) ) #1d-orbital d_x2-y2 
+      UnitCell.append( ("Crxz", np.array([0,  0,  0])) ) #1d-orbital d_xz 
+      UnitCell.append( ("Cryz", np.array([0,  0,  0])) ) #1d-orbital d_yz 
+      UnitCell.append( ("Crxy", np.array([0,  0,  0])) ) #1d-orbital d_xy 
+
+      UnitCell.append( ("O1z", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O1x", np.array([0.5,  0,  0])) ) #p-orbital
+      UnitCell.append( ("O1y", np.array([0.5,  0,  0])) ) #p-orbital
+    
+      UnitCell.append( ("O2z", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O2x", np.array([0,  0.5,  0])) ) #p-orbital
+      UnitCell.append( ("O2y", np.array([0,  0.5,  0])) ) #p-orbital
+      
+      UnitCell.append( ("O3z", np.array([0,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3x", np.array([0,  0,  0.5])) ) #p-orbital
+      UnitCell.append( ("O3y", np.array([0,  0,  0.5])) ) #p-orbital
+      
+      self.t = t
+      self.U = U
+      self.J = J
+      self.Delta = Delta
+
+      LatticeVectors = np.zeros((3,3), float)
+      LatticeVectors[0,:] = [1.,0.0,0.0]
+      LatticeVectors[1,:] = [0.0,1.,0.0]
+      LatticeVectors[2,:] = [0.0,0.0,1.]
+      # FIXMEL MaxRangeT and EnergyFactor are not adapted to the model 
+      # MaxRangeT should be larger than sqrt(3)
+      FLatticeModel.__init__(self, UnitCell, LatticeVectors, ["U", "t","Delta", "J"], MaxRangeT=1.8, EnergyFactor=1.0/2)
+
+   def MakeTijMatrix(self, SitesR, SitesC):
+      """return a len(SitesR) x len(SitesC) size of the core Hamiltonian
+      matrix."""
+      CoreH = np.zeros((len(SitesR), len(SitesC)))
+      
+      SiteType = {#'Niz2': 0,
+                  #'Nix2-y2': 1,
+                  'Crxz': 2,
+                  'Cryz': 3,
+                  'Crxy': 4,
+                  'O1z':  5,
+                  'O1x':  6,
+                  'O1y':  7,
+                  'O2z':  8,
+                  'O2x':  9,
+                  'O2y':  10,
+                  'O3z':  11,
+                  'O3x':  12,
+                  'O3y':  13,
+                  }
+
+      nUSites = len(SiteType)
+      for i in range(len(SitesR)/nUSites):
+         for j in range(len(SitesC)/nUSites):
+            dXyz = SitesR[i*nUSites][1]-SitesC[j*nUSites][1]
+            dXyz = [int(dx) for dx in dXyz]
+            if abs(dXyz[0]) < 3 and abs(dXyz[1]) < 3 and abs(dXyz[2]) < 3:
+               index = (dXyz[0]+2)*25+(dXyz[1]+2)*5+dXyz[2]+2
+               CoreH[i*nUSites:(i+1)*nUSites,j*nUSites:(j+1)*nUSites] = hoppingCr3d[index,:,:]
+               if index == 62:    
+                  CoreH[i*nUSites:(i*nUSites+3),j*nUSites:(j*nUSites+3)] -= self.Delta*np.eye(3)
+      return CoreH
+ 
+   def GetUi(self, (SiteTypeI,XyzI)):
+      if (SiteTypeI[:2]=='Cr'): return self.U 
+      else: return 0
+   
+   def GetJi(self, (SiteTypeI,XyzI), (SiteTypeJ, XyzJ)):
+      dXyz = XyzJ - XyzI
+      if ((SiteTypeI[:2]=='Cr') and (SiteTypeJ[:2] =='Cr') and sum(abs(dXyz)) == 0): return self.J
+      else: return 0
+
 
 def _TestLattices():
    L = 12
